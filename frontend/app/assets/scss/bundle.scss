@@ -1,0 +1,45 @@
+@import "normalize.css/normalize.css";
+@import "mixins";
+@import "fonts";
+@import "colors";
+@import "main";
+
+
+.fade-enter-active {
+  opacity: 0;
+
+  .dialog-container-block {
+    transition: all 0.3s ease;
+    transform: translateY(50px);
+  }
+}
+
+.fade-enter-to {
+  transition: all 0.3s ease;
+  opacity: 1;
+
+  .dialog-container-block {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+  }
+}
+
+.fade-leave-active {
+  transition: all 0.3s ease;
+  opacity: 0;
+
+  .dialog-container-block {
+    transition: all 0.3s ease;
+    transform: translateY(50px);
+  }
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}

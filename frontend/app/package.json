@@ -1,0 +1,26 @@
+{
+  "name": "collab-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "nuxt": "^3.6.5",
+    "sass": "^1.60.0"
+  },
+  "dependencies": {
+    "@nuxt/image": "^1.8.0",
+    "@pinia/nuxt": "^0.5.4",
+    "maska": "^2.1.10",
+    "normalize.css": "^8.0.1",
+    "pinia": "^2.2.2",
+    "socket.io-client": "^4.7.3",
+    "vue": "latest",
+    "vue-router": "latest"
+  }
+}
