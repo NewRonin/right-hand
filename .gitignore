@@ -25,3 +25,5 @@ logs
 
 #Package manager locks
 yarn.lock
+
+frontend/app/server/database/migrations

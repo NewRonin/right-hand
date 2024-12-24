@@ -13,9 +13,13 @@
     "nuxt": "^3.6.5",
     "sass": "^1.60.0"
   },
+  "prisma": {
+    "schema": "server/database/schema.prisma"
+  },
   "dependencies": {
     "@nuxt/image": "^1.8.0",
     "@pinia/nuxt": "^0.5.4",
+    "@types/node": "^22.10.2",
     "maska": "^2.1.10",
     "normalize.css": "^8.0.1",
     "pinia": "^2.2.2",

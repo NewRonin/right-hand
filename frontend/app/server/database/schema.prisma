@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") 
+  relationMode = "prisma"
+}
+
+model Role {
+  id                  Int      @id @default(autoincrement())
+  display_name        String
+  seniority_coefficient Float
+  employees           Employee[]
+  tasks               TaskRole[]
+}
+
+model SeniorityLevel {
+  id          Int      @id @default(autoincrement())
+  name        String
+  display_name String
+  employees   Employee[]
+}
+
+model Employee {
+  id                  Int               @id @default(autoincrement())
+  name                String
+  seniority_level_id  Int
+  roles_id            Int
+  seniorityLevel      SeniorityLevel   @relation(fields: [seniority_level_id], references: [id])
+  role                Role             @relation(fields: [roles_id], references: [id])
+  employeesOnProjects EmployeeOnProject[]
+}
+
+model EvaluationModel {
+  id    Int      @id @default(autoincrement())
+  title String
+  projects Project[]
+}
+
+model Project {
+  id                  Int               @id @default(autoincrement())
+  evaluation_model_id Int
+  title               String
+  description         String?
+  evaluationModel     EvaluationModel   @relation(fields: [evaluation_model_id], references: [id])
+  employeesOnProjects EmployeeOnProject[]
+  epics               Epic[]
+  timelines           Timeline[]
+}
+
+model EmployeeOnProject {
+  employees_id Int
+  projects_id  Int
+  employee     Employee @relation(fields: [employees_id], references: [id])
+  project      Project  @relation(fields: [projects_id], references: [id])
+
+  @@id([employees_id, projects_id])
+}
+
+model Epic {
+  id            Int      @id @default(autoincrement())
+  project_id    Int
+  title         String
+  total_estimation Float
+  project       Project  @relation(fields: [project_id], references: [id])
+  features      Feature[]
+}
+
+model Feature {
+  id            Int      @id @default(autoincrement())
+  epic_id       Int
+  title         String
+  total_estimation Float
+  epic          Epic     @relation(fields: [epic_id], references: [id])
+  tasks         Task[]
+}
+
+model Task {
+  id                  Int       @id @default(autoincrement())
+  feature_id          Int
+  title               String
+  optimistic_estimation Int?
+  realistic_estimation Int?
+  pessimistic_estimation Int?
+  t_shirt_size        TaskSize?
+  total_estimation    Float?
+  feature             Feature   @relation(fields: [feature_id], references: [id])
+  taskRoles           TaskRole[]
+  timelines           Timeline[]
+}
+
+model TaskRole {
+  task_id Int
+  roles_id Int
+  task     Task @relation(fields: [task_id], references: [id])
+  role     Role @relation(fields: [roles_id], references: [id])
+
+  @@id([task_id, roles_id])
+}
+
+model Timeline {
+  task_id     Int
+  project_id  Int
+  date_start  DateTime?
+  date_end    DateTime?
+  task        Task     @relation(fields: [task_id], references: [id])
+  project     Project  @relation(fields: [project_id], references: [id])
+
+  @@id([task_id, project_id])
+}
+
+enum TaskSize {
+  XS
+  S
+  M
+  L
+  XL
+}
