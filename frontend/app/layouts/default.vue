@@ -1,16 +1,12 @@
 <template>
   <div class="layout">
-    <VHeader class="header" @toFooter="scrollToFooter" />
-      <div class="content">
+    <div class="content">
         <slot />
       </div>
-    <VFooter id="footer" :isScaled="scaleContacts" />
   </div>
 </template>
 
 <script setup lang="ts">
-import VHeader from "~/components/common/VHeader.vue";
-import VFooter from "~/components/common/VFooter.vue";
 
 const scaleContacts = ref(false)
 
