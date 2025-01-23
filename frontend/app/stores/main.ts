@@ -22,6 +22,7 @@ export const useMainStore = defineStore("main", {
                 "://" +
                 this.host +
                 ":" +
+                this.port +
                 url
             );
         },
