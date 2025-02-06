@@ -2,7 +2,7 @@
   <Transition name="fade">
   <div class="page-container">
     <main>
-      
+      <CTableTree :columns="columns" :data="tableData" />
     </main>
   </div>
   </Transition>
@@ -10,6 +10,38 @@
 
 <script setup lang="ts">
 
+// Define column structure dynamically
+const columns = [
+  { key: "epic", label: "Epic" },
+  { key: "feature", label: "Feature" },
+  { key: "task", label: "Task" }
+];
+
+// Define nested table data
+const tableData = [
+  {
+    name: "Epic 1",
+    children: [
+      {
+        name: "Feature 1",
+        children: [{ name: "Task 1" }, { name: "Task 2" }]
+      },
+      {
+        name: "Feature 2",
+        children: [{ name: "Task 3" }, { name: "Task 4" }]
+      }
+    ]
+  },
+  {
+    name: "Epic 2",
+    children: [
+      {
+        name: "Feature 3",
+        children: [{ name: "Task 5" }]
+      }
+    ]
+  }
+];
 </script>
 
 <style scoped lang="scss">

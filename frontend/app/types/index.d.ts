@@ -12,4 +12,20 @@ declare global {
     enabled: boolean;
     custom?: boolean;
   };
+
+  type Task = {
+    name: string;
+  }
+  
+  type  Feature = {
+    name: string;
+    children: Task[];
+  }
+  
+  type Epic = {
+    name: string;
+    children: Feature[];
+  }
+
+  
 }
