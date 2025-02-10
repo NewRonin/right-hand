@@ -84,6 +84,7 @@ const addTask = (epicIndex: number, featureIndex: number) => {
 
 <style scoped>
 .table-container {
+  width: 100%;
   overflow-x: auto;
 }
 

@@ -10,14 +10,12 @@
 
 <script setup lang="ts">
 
-// Define column structure dynamically
 const columns = [
   { key: "epic", label: "Epic" },
   { key: "feature", label: "Feature" },
   { key: "task", label: "Task" }
 ];
 
-// Define nested table data
 const tableData = [
   {
     name: "Epic 1",
@@ -47,6 +45,8 @@ const tableData = [
 <style scoped lang="scss">
   .page-container{
     position: relative;
+    height: 100vh;
+    width: 100vw;
 
     display: flex;
     flex-direction: column;
@@ -60,7 +60,8 @@ const tableData = [
     }
 
     main {
-      width: 100%;
+      width: 80%;
+      height: 100%;
       display: flex;
       flex-flow: column nowrap;
       justify-content: flex-start;

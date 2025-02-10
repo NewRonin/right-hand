@@ -24,7 +24,13 @@ declare global {
   
   type Epic = {
     name: string;
+    priority?: string;
     children: Feature[];
+  }
+
+  type TableItem = {
+    name: string;
+    children: TableItem[];
   }
 
   
