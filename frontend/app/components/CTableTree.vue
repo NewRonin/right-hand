@@ -8,14 +8,14 @@
           </th>
         </tr>
       </thead>
-      <tbody>
-        <template v-for="(epic, epicIndex) in data" :key="epicIndex">
+      <tbody v-if="modelValue">
+        <template v-for="(epic, epicIndex) in modelValue" :key="epicIndex">
           <template v-for="(feature, featureIndex) in epic.children" :key="featureIndex">
             <template v-for="(task, taskIndex) in feature.children" :key="taskIndex">
               <tr>
                 <td
                   v-if="featureIndex === 0 && taskIndex === 0"
-                  :rowspan="epic.children.reduce((sum, f) => sum + f.children.length, 0)"
+                  :rowspan="epic.children?.reduce((sum, f) => { return f.children ? sum + f.children?.length : 0 }, 0)"
                   class="table-cell epic-cell"
                 >
                   {{ epic.name }}
@@ -23,7 +23,7 @@
 
                 <td
                   v-if="taskIndex === 0"
-                  :rowspan="feature.children.length"
+                  :rowspan="feature.children?.length"
                   class="table-cell feature-cell"
                 >
                   {{ feature.name }}
@@ -50,34 +50,33 @@ interface TableColumn {
 
 const props = defineProps<{
   columns: TableColumn[];
-  data: Epic[];
+  modelValue: TableItem[];
 }>();
 
-const emit = defineEmits(["update:data"]);
-
-const tableData = reactive<Epic[]>(props.data);
+const emit = defineEmits(["update:modelValue"]);
 
 const addEpic = () => {
-  tableData.push({
-    name: `New Epic ${tableData.length + 1}`,
+  props.modelValue.push({
+    name: `New Epic ${props.modelValue.length + 1}`,
     children: []
   });
-  emit("update:data", tableData);
+  emit("update:modelValue", props.modelValue);
 };
 
 const addFeature = (epicIndex: number) => {
-  tableData[epicIndex].children.push({
-    name: `New Feature ${tableData[epicIndex].children.length + 1}`,
+  props.modelValue[epicIndex].children?.push({
+    name: `New Feature `,
     children: []
   });
-  emit("update:data", tableData);
+  emit("update:modelValue", props.modelValue);
 };
 
 const addTask = (epicIndex: number, featureIndex: number) => {
-  tableData[epicIndex].children[featureIndex].children.push({
-    name: `New Task ${tableData[epicIndex].children[featureIndex].children.length + 1}`
+  props.modelValue[epicIndex].children?.[featureIndex]?.children?.push({
+    name: `New Task`,
+    children: []
   });
-  emit("update:data", tableData);
+  emit("update:modelValue", props.modelValue);
 };
 </script>
 

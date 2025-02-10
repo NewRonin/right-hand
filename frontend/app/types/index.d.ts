@@ -30,7 +30,7 @@ declare global {
 
   type TableItem = {
     name: string;
-    children: TableItem[];
+    children?: TableItem[];
   }
 
   

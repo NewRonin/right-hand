@@ -2,7 +2,7 @@
   <Transition name="fade">
   <div class="page-container">
     <main>
-      <CTableTree :columns="columns" :data="tableData" />
+      <CTableTree :columns="columns" v-model="tableData" />
     </main>
   </div>
   </Transition>
