@@ -33,5 +33,24 @@ declare global {
     children?: TableItem[];
   }
 
+  type TableSelectedItems = {
+    epicIndex: number, 
+    featureIndex: number, 
+    taskIndex: number, 
+  }
+
+  type ContextMenu = {
+    visible: boolean,
+    x: number,
+    y: number,
+    options: ContextMenuOption[],
+    selectedIndexes: TableSelectedItems,
+  }
+
+  type ContextMenuOption = {
+    label: string;
+    action?: string,
+  }
+
   
 }

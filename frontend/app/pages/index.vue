@@ -27,6 +27,10 @@ const tableData = [
       {
         name: "Feature 2",
         children: [{ name: "Task 3" }, { name: "Task 4" }]
+      },
+      {
+        name: "Feature 3",
+        children: []
       }
     ]
   },
