@@ -16,7 +16,7 @@ const columns = [
   { key: "task", label: "Task" }
 ];
 
-const tableData = [
+const tableData = ref([
   {
     name: "Epic 1",
     children: [
@@ -42,8 +42,12 @@ const tableData = [
         children: [{ name: "Task 5" }]
       }
     ]
+  },
+  {
+    name: "Epic 3",
+    children: []
   }
-];
+]);
 </script>
 
 <style scoped lang="scss">

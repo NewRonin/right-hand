@@ -7,13 +7,13 @@
             {{ col.label }}
           </th>
         </tr>
-      </thead>
-      <tbody v-if="normalizedData" :key="refreshKey">
+      </thead> 
+      <tbody>
         <template v-for="(epic, epicIndex) in normalizedData" :key="epicIndex">
           <template v-if="(epic.children ?? []).length > 0">
             <template v-for="(feature, featureIndex) in epic.children ?? []" :key="featureIndex">
               <template v-if="(feature.children ?? []).length > 0">
-                <template v-for="(task, taskIndex) in feature.children ?? []" :key="taskIndex">
+                <template v-for="(task, taskIndex) in feature.children ?? []" :key="`${epicIndex}-${featureIndex}-${taskIndex}`">
                   <tr>
                     <td
                       v-if="featureIndex === 0 && taskIndex === 0"
@@ -44,7 +44,7 @@
               </template>
 
               <template v-else>
-                <tr>
+                <tr :key="`${epicIndex}-${featureIndex}`">
                   <td v-if="featureIndex === 0"
                       :rowspan="(epic.children ?? []).reduce((sum, f) => sum + ((f.children ?? []).length || 1), 0)"
                       class="table-cell epic-cell"
@@ -57,21 +57,21 @@
                   >
                     {{ feature.name }}
                   </td>
-                  <td class="table-cell task-cell">No tasks</td>
+                  <td class="table-cell task-cell" @contextmenu.prevent="openContextMenu($event, epicIndex, featureIndex, -1, 'task')">No tasks</td>
                 </tr>
               </template>
             </template>
           </template>
 
           <template v-else>
-            <tr>
+            <tr :key="`${epicIndex}`">
               <td class="table-cell epic-cell"
                   @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'epic')"
               >
                 {{ epic.name }}
               </td>
-              <td class="table-cell feature-cell">No Features</td>
-              <td class="table-cell task-cell">No tasks</td>
+              <td class="table-cell feature-cell" @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'feat')">No Features</td>
+              <td class="table-cell task-cell" >No tasks</td>
             </tr>
           </template>
         </template>
@@ -101,8 +101,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
-
-const refreshKey = ref(0);
 
 const normalizedData = computed(() => {
   return props.modelValue.map(epic => ({
@@ -160,8 +158,8 @@ const handleContextMenuAction = (action: string) => {
     newData[epicIndex].children?.[featureIndex].children?.push({ name: "New Task" });
   }
 
+  console.log(newData)
   emit("update:modelValue", newData);
-  refreshKey.value++;
   contextMenu.value.visible = false;
 };
 
