@@ -122,12 +122,15 @@ const openContextMenu = (event: MouseEvent, epicIndex: number, featureIndex: num
 
   if (cellType === 'task') {
     options.push({ label: "Add Task", action: "addTask" });
+    options.push({ label: "Delete Task", action: "deleteTask" });
   }
   if (cellType === 'feat') {
     options.push({ label: "Add Feature", action: "addFeature" });
+    options.push({ label: "Delete Feature", action: "deleteFeature" });
   }
   if (cellType === 'epic') {
     options.push({ label: "Add Epic", action: "addEpic" });
+    options.push({ label: "Delete Epic", action: "deleteEpic" });
   }
 
   contextMenu.value = {
@@ -140,10 +143,11 @@ const openContextMenu = (event: MouseEvent, epicIndex: number, featureIndex: num
 };
 
 const handleContextMenuAction = (action: string) => {
-  const { epicIndex, featureIndex } = contextMenu.value.selectedIndexes;
+  const { epicIndex, featureIndex, taskIndex } = contextMenu.value.selectedIndexes;
 
   const newData = [...props.modelValue];
 
+  // Handle Add Logic
   if (action === "addEpic") {
     newData.push({ name: `New Epic ${newData.length + 1}`, children: [] });
   } else if (action === "addFeature" && epicIndex !== -1) {
@@ -158,7 +162,15 @@ const handleContextMenuAction = (action: string) => {
     newData[epicIndex].children?.[featureIndex].children?.push({ name: "New Task" });
   }
 
-  console.log(newData)
+   // Handle Deletion Logic
+   else if (action === "deleteEpic" && epicIndex !== -1) {
+    newData.splice(epicIndex, 1);
+  } else if (action === "deleteFeature" && epicIndex !== -1 && featureIndex !== -1) {
+    newData[epicIndex].children?.splice(featureIndex, 1);
+  } else if (action === "deleteTask" && epicIndex !== -1 && featureIndex !== -1 && taskIndex !== -1) {
+    newData[epicIndex].children?.[featureIndex].children?.splice(taskIndex, 1);
+  }
+
   emit("update:modelValue", newData);
   contextMenu.value.visible = false;
 };
