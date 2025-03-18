@@ -100,8 +100,8 @@ watch(selectedValue, (newValue) => {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 2rem; /* Custom size */
-  height: 2rem; /* Custom size */
+  width: 1.8rem; /* Custom size */
+  height: 1.8rem; /* Custom size */
   border-radius: 50%;
   border: .1rem solid #D9D9D9; /* Border color */
   background-color: transparent; /* Background color */

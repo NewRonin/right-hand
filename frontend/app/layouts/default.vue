@@ -1,8 +1,10 @@
 <template>
   <div class="layout">
+    <VHeader class="header" @toFooter="scrollToFooter" />
     <div class="content">
-        <slot />
-      </div>
+      <slot />
+    </div>
+    <VFooter id="footer" :isScaled="scaleContacts" />
   </div>
 </template>
 
@@ -23,16 +25,16 @@ function scrollToFooter() {
 </script>
 
 <style scoped lang="scss">
-  .layout {
-    display: flex;
-    flex-flow: column wrap;
-    justify-content: space-between;
-    width: 100dvw;
-    min-height: 100dvh;
-    overflow: hidden;
-  }
+.layout {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: space-between;
+  width: 100dvw;
+  min-height: 100dvh;
+  overflow: hidden;
+}
 
-  .content{
-    flex: 1;
-  }
+.content{
+  flex: 1;
+}
 </style>

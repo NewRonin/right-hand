@@ -17,7 +17,7 @@
     "schema": "server/database/schema.prisma"
   },
   "dependencies": {
-    "@nuxt/image": "^1.8.0",
+    "@nuxt/image": "^1.9.0",
     "@pinia/nuxt": "^0.5.4",
     "@types/node": "^22.10.2",
     "maska": "^2.1.10",
