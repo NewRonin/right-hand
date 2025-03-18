@@ -2,146 +2,76 @@
   <div class="table-container">
     <table class="custom-table">
       <thead>
-        <tr>
-          <th v-for="col in columns" :key="col.key" class="table-header">
-            {{ col.label }}
-          </th>
-        </tr>
+      <tr>
+        <th v-for="col in columns" :key="col.key" class="table-header">
+          {{ col.label }}
+        </th>
+      </tr>
       </thead>
       <tbody>
-        <template v-for="(epic, epicIndex) in normalizedData" :key="epicIndex">
-          <template v-if="(epic.children ?? []).length > 0">
-            <template
-              v-for="(feature, featureIndex) in epic.children ?? []"
-              :key="featureIndex"
-            >
-              <template v-if="(feature.children ?? []).length > 0">
-                <template
-                  v-for="(task, taskIndex) in feature.children ?? []"
-                  :key="`${epicIndex}-${featureIndex}-${taskIndex}`"
+      <template v-for="(epic, epicIndex) in normalizedData" :key="epicIndex">
+        <template v-if="(epic.children ?? []).length > 0">
+          <template v-for="(feature, featureIndex) in epic.children ?? []" :key="featureIndex">
+            <template v-if="(feature.children ?? []).length > 0">
+              <template v-for="(task, taskIndex) in feature.children ?? []" :key="`${epicIndex}-${featureIndex}-${taskIndex}`">
+                <tr
+                    draggable="true"
+                    @dragstart="onDragStart($event, epicIndex, featureIndex, taskIndex)"
+                    @dragover.prevent="onDragOver"
+                    @drop="onDrop($event, epicIndex, featureIndex, taskIndex)"
                 >
-                  <tr>
-                    <td
-                      v-if="featureIndex === 0 && taskIndex === 0"
-                      :rowspan="
-                        (epic.children ?? []).reduce(
-                          (sum, f) => sum + ((f.children ?? []).length || 1),
-                          0
-                        )
-                      "
-                      class="table-cell epic-cell"
-                      @contextmenu.prevent="
-                        openContextMenu(
-                          $event,
-                          epicIndex,
-                          featureIndex,
-                          taskIndex,
-                          'epic'
-                        )
-                      "
-                    >
-                      {{ epic.name }}
-                    </td>
-
-                    <td
-                      v-if="taskIndex === 0"
-                      :rowspan="(feature.children ?? []).length"
-                      class="table-cell feature-cell"
-                      @contextmenu.prevent="
-                        openContextMenu(
-                          $event,
-                          epicIndex,
-                          featureIndex,
-                          taskIndex,
-                          'feat'
-                        )
-                      "
-                    >
-                      {{ feature.name }}
-                    </td>
-
-                    <td
-                      class="table-cell task-cell"
-                      @contextmenu.prevent="
-                        openContextMenu(
-                          $event,
-                          epicIndex,
-                          featureIndex,
-                          taskIndex,
-                          'task'
-                        )
-                      "
-                    >
-                      {{ task.name }}
-                    </td>
-                  </tr>
-                </template>
-              </template>
-
-              <template v-else>
-                <tr :key="`${epicIndex}-${featureIndex}`">
-                  <td
-                    v-if="featureIndex === 0"
-                    :rowspan="
-                      (epic.children ?? []).reduce(
-                        (sum, f) => sum + ((f.children ?? []).length || 1),
-                        0
-                      )
-                    "
-                    class="table-cell epic-cell"
-                    @contextmenu.prevent="
-                      openContextMenu($event, epicIndex, featureIndex, -1, 'epic')
-                    "
-                  >
+                  <td v-if="featureIndex === 0 && taskIndex === 0" :rowspan="(epic.children ?? []).reduce((sum, f) => sum + ((f.children ?? []).length || 1), 0)" class="table-cell epic-cell" >
                     {{ epic.name }}
                   </td>
-                  <td
-                    class="table-cell feature-cell"
-                    @contextmenu.prevent="
-                      openContextMenu($event, epicIndex, featureIndex, -1, 'feat')
-                    "
-                  >
+                  <td v-if="taskIndex === 0" :rowspan="(feature.children ?? []).length" class="table-cell feature-cell">
                     {{ feature.name }}
                   </td>
-                  <td
-                    class="table-cell task-cell"
-                    @contextmenu.prevent="
-                      openContextMenu($event, epicIndex, featureIndex, -1, 'task')
-                    "
-                  >
-                    —
+                  <td class="table-cell task-cell">
+                    {{ task.name }}
                   </td>
                 </tr>
               </template>
             </template>
-          </template>
-
-          <template v-else>
-            <tr :key="`${epicIndex}`">
-              <td
-                class="table-cell epic-cell"
-                @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'epic')"
-              >
-                {{ epic.name }}
-              </td>
-              <td
-                class="table-cell feature-cell"
-                @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'feat')"
-              >
-                —
-              </td>
-              <td class="table-cell task-cell">—</td>
-            </tr>
+            <template v-else>
+              <tr :key="`${epicIndex}-${featureIndex}`" draggable="true" @dragstart="onDragStart($event, epicIndex, featureIndex, -1)" @dragover.prevent="onDragOver" @drop="onDrop($event, epicIndex, featureIndex, -1)">
+                <td v-if="featureIndex === 0" :rowspan="(epic.children ?? []).reduce((sum, f) => sum + ((f.children ?? []).length || 1), 0)" class="table-cell epic-cell">
+                  {{ epic.name }}
+                </td>
+                <td class="table-cell feature-cell">
+                  {{ feature.name }}
+                </td>
+                <td class="table-cell task-cell">—</td>
+              </tr>
+            </template>
           </template>
         </template>
+
+        <template v-else>
+          <tr :key="`${epicIndex}`">
+            <td
+                class="table-cell epic-cell"
+                @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'epic')"
+            >
+              {{ epic.name }}
+            </td>
+            <td
+                class="table-cell feature-cell"
+                @contextmenu.prevent="openContextMenu($event, epicIndex, -1, -1, 'feat')"
+            >
+              —
+            </td>
+            <td class="table-cell task-cell">—</td>
+          </tr>
+        </template>
+      </template>
       </tbody>
     </table>
 
     <MenuContext
-      v-if="contextMenu.visible"
-      :options="contextMenu.options"
-      :contextMenu="contextMenu"
-      @contextMenuAction="handleContextMenuAction"
+        v-if="contextMenu.visible"
+        :options="contextMenu.options"
+        :contextMenu="contextMenu"
+        @contextMenuAction="handleContextMenuAction"
     />
 
     <CDialog v-model="dialog">
@@ -163,6 +93,12 @@
 interface TableColumn {
   key: string;
   label: string;
+}
+
+interface DraggedItem {
+  epicIndex: number;
+  featureIndex: number;
+  taskIndex: number;
 }
 
 const props = defineProps<{
@@ -191,11 +127,11 @@ const dialog = ref(false);
 const dialogData = ref()
 
 const openContextMenu = (
-  event: MouseEvent,
-  epicIndex: number,
-  featureIndex: number,
-  taskIndex: number,
-  cellType: string
+    event: MouseEvent,
+    epicIndex: number,
+    featureIndex: number,
+    taskIndex: number,
+    cellType: string
 ) => {
   const options = [];
 
@@ -229,34 +165,31 @@ const handleContextMenuAction = (action: string) => {
 
   const newData = [...props.modelValue];
 
-  // Handle Edit Logic
-  if (action.includes("add") || action.includes("edit")) { 
+  if (action.includes("add") || action.includes("edit")) {
     dialogData.value = {
       newData: newData,
       action: action,
-      name: action.includes("edit") 
-        ? taskIndex !== -1 
-          ? newData[epicIndex]?.children?.[featureIndex].children?.[taskIndex].name 
-          : featureIndex !== -1 
-            ? newData[epicIndex].children?.[featureIndex].name 
-            : newData[epicIndex].name
-        : ''
+      name: action.includes("edit")
+          ? taskIndex !== -1
+              ? newData[epicIndex]?.children?.[featureIndex].children?.[taskIndex].name
+              : featureIndex !== -1
+                  ? newData[epicIndex].children?.[featureIndex].name
+                  : newData[epicIndex].name
+          : ''
     }
-
 
     dialog.value = true
   }
 
-  // Handle Deletion Logic
   else if (action === "deleteEpic" && epicIndex !== -1) {
     newData.splice(epicIndex, 1);
   } else if (action === "deleteFeature" && epicIndex !== -1 && featureIndex !== -1) {
     newData[epicIndex].children?.splice(featureIndex, 1);
   } else if (
-    action === "deleteTask" &&
-    epicIndex !== -1 &&
-    featureIndex !== -1 &&
-    taskIndex !== -1
+      action === "deleteTask" &&
+      epicIndex !== -1 &&
+      featureIndex !== -1 &&
+      taskIndex !== -1
   ) {
     newData[epicIndex].children?.[featureIndex].children?.splice(taskIndex, 1);
   }
@@ -273,7 +206,6 @@ const handleEditAdd = () => {
 
   const action = dialogData.value.action
 
-  // Handle Add Logic
   if (action === "addEpic") {
     newData.push({ name: dialogData.value.name, children: [] });
   } else if (action === "addFeature" && epicIndex !== -1) {
@@ -283,15 +215,14 @@ const handleEditAdd = () => {
     newData[epicIndex].children.push({ name: dialogData.value.name, children: [] });
   } else if (action === "addTask" && epicIndex !== -1 && featureIndex !== -1) {
     if (
-      !newData[epicIndex].children?.[featureIndex]?.children &&
-      newData[epicIndex].children
+        !newData[epicIndex].children?.[featureIndex]?.children &&
+        newData[epicIndex].children
     ) {
       newData[epicIndex].children[featureIndex].children = [];
     }
     newData[epicIndex].children?.[featureIndex].children?.push({ name: dialogData.value.name });
   }
 
-  // Handle Edit Logic
   else if (action === "editEpic" && epicIndex !== -1) {
     newData[epicIndex].name = dialogData.value.name;
   } else if (action === "editFeature" && epicIndex !== -1 && featureIndex !== -1) {
@@ -303,116 +234,108 @@ const handleEditAdd = () => {
   dialog.value = false
   emit("update:modelValue", newData);
   contextMenu.value.visible = false;
+
 }
+
+const draggedItem = ref<DraggedItem | null>(null);
+
+const onDragStart = (
+    event: DragEvent,
+    epicIndex: number,
+    featureIndex: number,
+    taskIndex: number
+) => {
+  draggedItem.value = { epicIndex, featureIndex, taskIndex };
+  if (event.dataTransfer) {
+    const transparentImage = new Image();
+    event.dataTransfer.setDragImage(transparentImage, 0, 0);
+    event.dataTransfer.effectAllowed = "move";
+  }
+};
+
+const onDrop = (
+    event: DragEvent,
+    targetEpicIndex: number,
+    targetFeatureIndex: number,
+    targetTaskIndex: number
+) => {
+  event.preventDefault();
+  if (!draggedItem.value) return;
+
+  const { epicIndex, featureIndex, taskIndex } = draggedItem.value;
+  const newData: TableItem[] = reactive(props.modelValue);
+
+  let draggedElement: TableItem | undefined;
+
+  if (taskIndex !== -1) {
+    draggedElement = newData[epicIndex]?.children?.[featureIndex]?.children?.splice(taskIndex, 1)[0];
+  } else if (featureIndex !== -1) {
+    draggedElement = newData[epicIndex]?.children?.splice(featureIndex, 1)[0];
+  } else {
+    draggedElement = newData.splice(epicIndex, 1)[0];
+  }
+
+  if (!draggedElement) return;
+
+  if (!newData[targetEpicIndex]?.children) {
+    newData[targetEpicIndex].children = [];
+  }
+
+  if (targetTaskIndex !== -1 || (targetFeatureIndex !== -1 && targetTaskIndex === -1)) {
+    if (!newData[targetEpicIndex]?.children?.[targetFeatureIndex]?.children) {
+      newData[targetEpicIndex].children[targetFeatureIndex].children = [];
+    }
+    newData[targetEpicIndex].children[targetFeatureIndex].children.splice(targetTaskIndex, 0, draggedElement);
+  } else if (targetFeatureIndex !== -1) {
+    newData[targetEpicIndex].children.splice(targetFeatureIndex, 0, draggedElement);
+  } else {
+    newData.splice(targetEpicIndex, 0, draggedElement);
+  }
+
+  draggedItem.value = null;
+  emit("update:modelValue", newData);
+};
+
+const onDragOver = (event: DragEvent) => {
+  event.preventDefault();
+};
+
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .table-container {
   width: 100%;
-  overflow-x: auto;
-  margin: 20px 0; 
+  max-height: 70vh;
+  overflow: auto;
 }
 
 .custom-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Montserrat', sans-serif; 
 }
 
 .table-header {
-  background-color: var(--base-pink);
-  color: var(--base-black); 
-  border: 1px solid var(--inactive);
-  padding: 12px 10px;
+  background-color: #f4f4f4;
   text-align: left;
-  font-family: 'Montserrat', sans-serif; 
-  font-weight: 600; 
-  text-transform: uppercase; 
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
 }
 
 .table-cell {
-  border: 1px solid var(--inactive);
-  padding: 10px;
-  font-family: 'Montserrat', sans-serif; 
-  font-size: 16px; 
-  color: var(--base-black); 
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
 }
 
 .epic-cell {
-  font-weight: bold;
-  background-color: var(--light-white);
-  background-color: #eaeaea;
-  color: var(--base-black); 
+  background-color: #f9f9f9;
 }
 
 .feature-cell {
-  font-weight: 500;
-  background-color: var(--light-white);
-  color: var(--base-black); 
+  background-color: #f1f1f1;
 }
 
 .task-cell {
-  font-size: 14px;
-  background-color: #ffffff; 
-  color: var(--base-black); 
+  background-color: #fff;
 }
 
-.custom-table tr:nth-child(even) {
-  background-color: var(--light-white); 
-}
-
-.custom-table tr:nth-child(odd) {
-  background-color: #ffffff; 
-}
-
-.custom-table tr:hover {
-  background-color: var(--main); 
-  color: #fff; 
-}
-
-.custom-table th, .custom-table td {
-  text-align: center; 
-}
-
-.dialog-window {
-  position: relative;
-  width: 40vw;
-  padding: 56px 0;
-  height: 40vh;
-  border-radius: 16px;
-  background-color: var(--light-white);
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-
-  .close {
-    position: absolute;
-    top: 24px;
-    right: 24px;
-  }
-
-  .form-container {
-      width: 100%;
-      height: 100%;
-      border-radius: 2rem;
-      background-color: var(--light-white);
-
-      display: flex;
-      flex-flow: column nowrap;
-      align-items: center;
-      justify-content: center;
-
-      padding: 4rem;
-      gap: 2rem;
-    }
-
-    .title {
-      font-size: 1.5rem;
-    }
-
-    button {
-      margin-top: 4rem;
-      width: 20rem;
-    }
-}
 </style>

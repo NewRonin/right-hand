@@ -17,12 +17,15 @@ export default defineEventHandler(async (event) => {
   try {
     switch (method) {
       case 'GET': {
-        // Получение модели оценки по ID
         if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
+          // Если id не передан, возвращаем все модели
+          const evaluationModels = await prisma.evaluationModel.findMany({
+            include: {
+              projects: true,  // Включаем проекты, связанные с моделью
+            },
           })
+
+          return { success: true, data: evaluationModels }
         }
 
         const id = Number(params.id)
