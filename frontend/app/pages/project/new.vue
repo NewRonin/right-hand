@@ -6,7 +6,7 @@
           <div class="selection-container">
             <InputRadio
                 v-model="selectedEvaluationModel"
-                :label="'Модель оценки'"
+                :label="'Evaluation model'"
                 :options="evaluationModels?.data?.map(model => ({
                 label: model.title,
                 value: model.id
@@ -15,14 +15,14 @@
             />
           </div>
           <div class="buttons-container">
-            <VButton class="next-button" @click="goToNextStep" :disabled="!selectedEvaluationModel">Далее</VButton>
+            <VButton class="next-button" @click="goToNextStep" :disabled="!selectedEvaluationModel">Next</VButton>
           </div>
         </section>
         <section v-else-if="step === 1" class="selection-section">
           <div class="selection-container">
             <InputMain
                 v-model="projectName"
-                :label="`Название проекта`"
+                :label="`Project title`"
                 :options="evaluationModels?.data?.map(model => ({
                 label: model.title,
                 value: model.id
@@ -31,7 +31,7 @@
             />
           </div>
           <div class="buttons-container">
-            <VButton class="next-button" @click="goToNextStep" :disabled="!projectName">Далее</VButton>
+            <VButton class="next-button" @click="goToNextStep" :disabled="!projectName">Next</VButton>
           </div>
         </section>
         <section v-else class="table-section">
@@ -40,7 +40,7 @@
             <p> Model: {{ selectedEvaluationModel ? evaluationModels?.data?.find(model => model.id === selectedEvaluationModel)?.title : 'Unknown evaluation model' }}</p>
           </div>
 
-          <CTableTree :columns="columns" v-model="tableData" />
+          <CTableWBS :columns="columns" v-model="tableData" />
         </section>
       </main>
     </div>
@@ -52,56 +52,21 @@
 const step = ref(1);  // Текущий шаг, меняем на 2, когда переходим ко второму этапу
 
 const columns = [
-  { key: "epic", label: "Epic" },
-  { key: "feature", label: "Feature" },
-  { key: "task", label: "Task" },
+  { key: "epic", field: "epic", header: "Epic" },
+  { key: "feature", field: "feature", header: "Feature" },
+  { key: "name", field: "name", header: "Task" },
+  { key: "priority", field: "priority", header: "Priority" },
 ];
 
 const tableData = ref([
-  {
-    id: 'epic-1',
-    name: "Epic 1",
-    children: [
-      {
-        id: 'feature-1',
-        name: "Feature 1",
-        children: [
-          { id: 'task-1', name: "Task 1" },
-          { id: 'task-2', name: "Task 2" }
-        ]
-      },
-      {
-        id: 'feature-2',
-        name: "Feature 2",
-        children: [
-          { id: 'task-3', name: "Task 3" },
-          { id: 'task-4', name: "Task 4" }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'epic-2',
-    name: "Epic 2",
-    children: [
-      {
-        id: 'feature-3',
-        name: "Feature 3",
-        children: [
-          { id: 'task-5', name: "Task 5" },
-          { id: 'task-6', name: "Task 6" }
-        ]
-      },
-      {
-        id: 'feature-4',
-        name: "Feature 4",
-        children: [
-          { id: 'task-7', name: "Task 7" },
-          { id: 'task-8', name: "Task 8" }
-        ]
-      }
-    ]
-  }
+  { "id": "task-1", "name": "Task 1", "priority": "High", "feature": "feature-1", "featureId": "feature-1", "epic": "epic-1", "epicId": "epic-1" },
+  { "id": "task-2", "name": "Task 2", "priority": "High", "feature": "feature-1", "featureId": "feature-1", "epic": "epic-1", "epicId": "epic-1" },
+  { "id": "task-3", "name": "Task 3", "priority": "High", "feature": "feature-2", "featureId": "feature-2", "epic": "epic-1", "epicId": "epic-1" },
+  { "id": "task-4", "name": "Task 4", "priority": "High", "feature": "feature-2", "featureId": "feature-2", "epic": "epic-1", "epicId": "epic-1" },
+  { "id": "task-5", "name": "Task 5", "priority": "Normal", "feature": "feature-3", "featureId": "feature-3", "epic": "epic-2", "epicId": "epic-2" },
+  { "id": "task-6", "name": "Task 6", "priority": "Normal", "feature": "feature-3", "featureId": "feature-3", "epic": "epic-2", "epicId": "epic-2" },
+  { "id": "task-7", "name": "Task 7", "priority": "Normal", "feature": "feature-4", "featureId": "feature-4", "epic": "epic-2", "epicId": "epic-2" },
+  { "id": "task-8", "name": "Task 8", "priority": "Normal", "feature": "feature-4", "featureId": "feature-4", "epic": "epic-2", "epicId": "epic-2" }
 ]);
 
 const selectedEvaluationModel = ref();
@@ -155,9 +120,6 @@ const goToNextStep = () => {
   flex-direction: column;
   align-items: center;
   padding: 2rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
 }
 
@@ -167,9 +129,6 @@ const goToNextStep = () => {
   flex-direction: column;
   align-items: flex-start;
   padding: 2rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
 
   .header-info{

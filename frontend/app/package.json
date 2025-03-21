@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
+    "@primevue/nuxt-module": "^4.3.2",
     "nuxt": "^3.6.5",
     "sass": "^1.60.0"
   },
@@ -19,10 +20,12 @@
   "dependencies": {
     "@nuxt/image": "^1.9.0",
     "@pinia/nuxt": "^0.5.4",
+    "@primeuix/themes": "^1.0.0",
     "@types/node": "^22.10.2",
     "maska": "^2.1.10",
     "normalize.css": "^8.0.1",
     "pinia": "^2.2.2",
+    "primevue": "^4.3.2",
     "socket.io-client": "^4.7.3",
     "vue": "latest",
     "vue-router": "latest"

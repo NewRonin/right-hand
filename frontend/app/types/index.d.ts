@@ -31,6 +31,7 @@ declare global {
   type TableItem = {
     name: string;
     children?: TableItem[];
+    priority?: string;
   }
 
   type TableSelectedItems = {

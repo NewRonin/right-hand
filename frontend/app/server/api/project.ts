@@ -27,6 +27,17 @@ export default defineEventHandler(async (event) => {
           })
         }
 
+        if (!params || !params.id || isNaN(Number(params.id))) {
+          // Если id не передан, возвращаем все модели
+          const evaluationModels = await prisma.evaluationModel.findMany({
+            include: {
+              projects: true,  // Включаем проекты, связанные с моделью
+            },
+          })
+
+          return { success: true, data: evaluationModels }
+        }
+
         const id = Number(params.id)
 
         const project = await prisma.project.findUnique({

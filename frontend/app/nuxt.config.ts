@@ -21,6 +21,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/image',
     '@pinia/nuxt',
+    '@primevue/nuxt-module',
   ],
 
   nitro: {
@@ -46,6 +47,12 @@ export default defineNuxtConfig({
 
   build: {
     transpile: ['vue-countup-v3'],
+  },
+
+  primevue: {
+    components: {
+      exclude: ['Editor', 'Chart', 'Form', 'FormField']
+    }
   },
 
   compatibilityDate: '2024-04-03',

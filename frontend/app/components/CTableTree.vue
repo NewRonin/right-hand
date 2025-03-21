@@ -29,6 +29,9 @@
                   <td class="table-cell task-cell">
                     {{ task.name }}
                   </td>
+                  <td class="table-cell task-cell">
+                    {{ task.priority || 'Low' }}
+                  </td>
                 </tr>
               </template>
             </template>

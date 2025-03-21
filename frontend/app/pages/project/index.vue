@@ -1,7 +1,7 @@
 <template>
   <div class="project-page">
-    <div class="title">Welcome!</div>
-    <VButton @click="redirectToNewProject">Go to New Project</VButton>
+    <div class="title">No projects found</div>
+    <VButton @click="redirectToNewProject">Create project</VButton>
   </div>
 </template>
 
@@ -16,11 +16,11 @@ const redirectToNewProject = () => {
 <style scoped lang="scss">
 .project-page {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   flex-flow: column wrap;
-  gap: 50%;
-  height: 100vh;
+  height: calc(100dvh - 10rem);
+  padding: 6rem 1rem;
   background-color: var(--light-gray);
 
   button {
@@ -28,7 +28,7 @@ const redirectToNewProject = () => {
   }
 
   .title {
-    font-size: 6rem;
+    font-size: 2rem;
   }
 }
 </style>
