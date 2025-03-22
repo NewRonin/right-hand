@@ -20,22 +20,23 @@ export default defineEventHandler(async (event) => {
   try {
     switch (method) {
       case 'GET': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
-        }
-
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          // Если id не передан, возвращаем все модели
-          const evaluationModels = await prisma.evaluationModel.findMany({
+        if (!params || !params.id) {
+          // Если нет ID, возвращаем все проекты
+          const projects = await prisma.project.findMany({
             include: {
-              projects: true,  // Включаем проекты, связанные с моделью
+              evaluationModel: true,
+              epics: {
+                include: {
+                  features: {
+                    include: {
+                      tasks: true,
+                    },
+                  },
+                },
+              },
             },
           })
-
-          return { success: true, data: evaluationModels }
+          return { success: true, data: projects }
         }
 
         const id = Number(params.id)

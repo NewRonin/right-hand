@@ -116,7 +116,7 @@ watch(selectedValue, (newValue) => {
 .radio-option label::after {
   content: "";
   position: absolute;
-  left: .6rem;
+  left: .5rem;
   top: 50%;
   transform: translateY(-50%);
   width: .8rem; /* Inner circle size */

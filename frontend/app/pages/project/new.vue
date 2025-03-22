@@ -41,6 +41,12 @@
           </div>
 
           <CTableWBS :columns="columns" v-model="tableData" />
+
+          <div class="buttons-container">
+            <VButton class="save-button" @click="saveProject" :disabled="isSaving">
+              {{ isSaving ? "Saving..." : "Save" }}
+            </VButton>
+          </div>
         </section>
       </main>
     </div>
@@ -71,6 +77,9 @@ const tableData = ref([
 
 const selectedEvaluationModel = ref();
 const projectName = ref('')
+const isSaving = ref(false);
+const store = useMainStore();
+const router = useRouter()
 
 // Получаем данные моделей оценки
 const evaluationModels = await $fetch('/api/evaluationModel', {
@@ -80,6 +89,33 @@ const evaluationModels = await $fetch('/api/evaluationModel', {
 // Функция для перехода на следующий этап
 const goToNextStep = () => {
   step.value++;
+};
+
+const saveProject = async () => {
+  if (!projectName.value || !selectedEvaluationModel.value) return;
+  
+  isSaving.value = true;
+  
+  try {
+    const response = await $fetch(store.getApi('/api/project'), {
+      method: "POST",
+      body: {
+        title: projectName.value,
+        evaluationModelId: selectedEvaluationModel.value,
+        description: "New project created",
+      },
+    });
+
+    if (response.success) {
+      router.push(`/project/${response.data.id}`); // Redirect to project page
+    } else {
+      console.error("Failed to save project:", response);
+    }
+  } catch (error) {
+    console.error("Error saving project:", error);
+  } finally {
+    isSaving.value = false;
+  }
 };
 </script>
 
@@ -91,6 +127,7 @@ const goToNextStep = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding-top: 5.6rem;
 
   @media (max-width: 833px) {
@@ -127,12 +164,13 @@ const goToNextStep = () => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   padding: 2rem;
   margin-bottom: 2rem;
+  font-size: 2rem !important;
 
   .header-info{
-    margin-bottom: 2rem;
+    margin-bottom: 4rem;
   }
 }
 

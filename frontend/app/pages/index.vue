@@ -2,7 +2,7 @@
   <Transition name="fade">
   <div class="page-container">
     <main>
-      Empty for now...
+      Main page
     </main>
   </div>
   </Transition>

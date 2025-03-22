@@ -1,4 +1,5 @@
 
+import Aura from '@primeuix/themes/aura';
 
 export default defineNuxtConfig({
   ssr: true,
@@ -50,6 +51,11 @@ export default defineNuxtConfig({
   },
 
   primevue: {
+    options: {
+      theme: {
+          preset: Aura
+      }
+    },
     components: {
       exclude: ['Editor', 'Chart', 'Form', 'FormField']
     }
