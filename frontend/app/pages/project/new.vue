@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 
-const step = ref(1);  // Текущий шаг, меняем на 2, когда переходим ко второму этапу
+const step = ref(1);  
 
 const columns = [
   { key: "epic", field: "epic", header: "Epic" },
@@ -81,12 +81,10 @@ const isSaving = ref(false);
 const store = useMainStore();
 const router = useRouter()
 
-// Получаем данные моделей оценки
 const evaluationModels = await $fetch('/api/evaluationModel', {
   method: "GET",
 });
 
-// Функция для перехода на следующий этап
 const goToNextStep = () => {
   step.value++;
 };
@@ -107,7 +105,7 @@ const saveProject = async () => {
     });
 
     if (response.success) {
-      router.push(`/project/${response.data.id}`); // Redirect to project page
+      router.push(`/project/${response.data.id}`); 
     } else {
       console.error("Failed to save project:", response);
     }
@@ -167,7 +165,6 @@ const saveProject = async () => {
   align-items: center;
   padding: 2rem;
   margin-bottom: 2rem;
-  font-size: 2rem !important;
 
   .header-info{
     margin-bottom: 4rem;
