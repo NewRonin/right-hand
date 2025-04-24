@@ -41,10 +41,10 @@ model EvaluationModel {
 
 model Project {
   id                  Int               @id @default(autoincrement())
-  evaluation_model_id Int
+  evaluationModelId   Int               @map("evaluation_model_id")
   title               String
   description         String?
-  evaluationModel     EvaluationModel   @relation(fields: [evaluation_model_id], references: [id])
+  evaluationModel     EvaluationModel   @relation(fields: [evaluationModelId], references: [id])
   employeesOnProjects EmployeeOnProject[]
   epics               Epic[]
   timelines           Timeline[]

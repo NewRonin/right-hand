@@ -5,7 +5,7 @@
         <section class="table-section">
           <div class="header-info">
             <h2> Project name: {{projectName || 'Unknown title' }}</h2>
-            <p> Model: {{ selectedEvaluationModel ? evaluationModels?.data?.find(model => model.id === selectedEvaluationModel)?.title : 'Unknown evaluation model' }}</p>
+            <p> Model: {{ selectedEvaluationModel || 'Unknown evaluation model' }}</p>
           </div>
 
           <CTableWBS :columns="columns" v-model="tableData" />
@@ -14,7 +14,7 @@
             <VButton class="save-button" @click="saveProject" :disabled="isSaving">
               {{ isSaving ? "Saving..." : "Save" }}
             </VButton>
-          </div>
+          </div>я
         </section>
       </main>
     </div>
@@ -22,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+
 
 const route = useRoute()
 
@@ -32,17 +33,7 @@ const columns = [
   { key: "priority", field: "priority", header: "Priority" },
 ];
 
-const tableData = ref([
-  { "id": "task-1", "name": "Task 1", "priority": "High", "feature": "feature-1", "featureId": "feature-1", "epic": "epic-1", "epicId": "epic-1" },
-  { "id": "task-2", "name": "Task 2", "priority": "High", "feature": "feature-1", "featureId": "feature-1", "epic": "epic-1", "epicId": "epic-1" },
-  { "id": "task-3", "name": "Task 3", "priority": "High", "feature": "feature-2", "featureId": "feature-2", "epic": "epic-1", "epicId": "epic-1" },
-  { "id": "task-4", "name": "Task 4", "priority": "High", "feature": "feature-2", "featureId": "feature-2", "epic": "epic-1", "epicId": "epic-1" },
-  { "id": "task-5", "name": "Task 5", "priority": "Normal", "feature": "feature-3", "featureId": "feature-3", "epic": "epic-2", "epicId": "epic-2" },
-  { "id": "task-6", "name": "Task 6", "priority": "Normal", "feature": "feature-3", "featureId": "feature-3", "epic": "epic-2", "epicId": "epic-2" },
-  { "id": "task-7", "name": "Task 7", "priority": "Normal", "feature": "feature-4", "featureId": "feature-4", "epic": "epic-2", "epicId": "epic-2" },
-  { "id": "task-8", "name": "Task 8", "priority": "Normal", "feature": "feature-4", "featureId": "feature-4", "epic": "epic-2", "epicId": "epic-2" }
-]);
-
+const tableData = ref([]);
 const selectedEvaluationModel = ref();
 const projectName = ref('')
 const isSaving = ref(false);
@@ -59,29 +50,24 @@ const projectLoaded = ref(false);
 onMounted(async () => {
   if (projectId.value) {
     try {
-      const response = await $fetch(`/api/project?id=${projectId.value}`);
+      const response = await $fetch(store.getApi(`/api/project?id=${projectId.value}`));
       if (response.success) {
         const project = response.data;
         projectName.value = project.title;
-        selectedEvaluationModel.value = project.evaluation_model_id;
+        selectedEvaluationModel.value = project.evaluationModel.title;
         projectLoaded.value = true;
-
-        const flattenedTasks = project.epics.flatMap(epic =>
-          epic.features.flatMap(feature =>
-            feature.tasks.map(task => ({
-              id: task.id,
-              name: task.name,
-              priority: task.priority,
-              epic: epic.title,
-              epicId: epic.id,
-              feature: feature.title,
-              featureId: feature.id
-            }))
-          )
-        );
-
-        //tableData.value = flattenedTasks;
       }
+
+      const flatItems = await $fetch(store.getApi('/api/tableItems'), {
+        query: { projectId : projectId.value }, 
+        method: "GET",
+      });
+      
+      if (flatItems.success) {
+        tableData.value = flatItems.data || []
+      }
+
+
     } catch (error) {
       console.error("Failed to load project:", error);
     }

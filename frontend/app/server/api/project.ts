@@ -1,15 +1,16 @@
 import prisma from "~/server/database/client"
+import { getQuery, getMethod, readBody, createError } from "h3"
 import { sendError } from "h3"
 
 interface ProjectUpdateBody {
   title: string
-  description: string
+  description?: string
   evaluationModelId: number
 }
 
 interface ProjectCreateBody {
   title: string
-  description: string
+  description?: string
   evaluationModelId: number
 }
 
@@ -21,7 +22,6 @@ export default defineEventHandler(async (event) => {
     switch (method) {
       case 'GET': {
         if (!params || !params.id) {
-          // Если нет ID, возвращаем все проекты
           const projects = await prisma.project.findMany({
             include: {
               evaluationModel: true,
@@ -40,6 +40,9 @@ export default defineEventHandler(async (event) => {
         }
 
         const id = Number(params.id)
+        if (isNaN(id)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
+        }
 
         const project = await prisma.project.findUnique({
           where: { id },
@@ -58,10 +61,7 @@ export default defineEventHandler(async (event) => {
         })
 
         if (!project) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: 'Project not found',
-          })
+          throw createError({ statusCode: 404, statusMessage: 'Project not found' })
         }
 
         return { success: true, data: project }
@@ -71,17 +71,14 @@ export default defineEventHandler(async (event) => {
         const body = await readBody<ProjectCreateBody>(event)
 
         if (!body.title || !body.evaluationModelId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Missing or invalid body parameters',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Missing or invalid body parameters' })
         }
 
         const createdProject = await prisma.project.create({
           data: {
             title: body.title,
             description: body.description,
-            evaluation_model_id: body.evaluationModelId,
+            evaluationModelId: body.evaluationModelId,
           },
         })
 
@@ -90,20 +87,14 @@ export default defineEventHandler(async (event) => {
 
       case 'PUT': {
         if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
 
         const id = Number(params.id)
         const body = await readBody<ProjectUpdateBody>(event)
 
         if (!body.title || !body.evaluationModelId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Missing or invalid body parameters',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Missing or invalid body parameters' })
         }
 
         const updatedProject = await prisma.project.update({
@@ -111,7 +102,7 @@ export default defineEventHandler(async (event) => {
           data: {
             title: body.title,
             description: body.description,
-            evaluation_model_id: body.evaluationModelId,
+            evaluationModelId: body.evaluationModelId,
           },
         })
 
@@ -120,32 +111,26 @@ export default defineEventHandler(async (event) => {
 
       case 'DELETE': {
         if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
 
         const id = Number(params.id)
 
-        await prisma.project.delete({
-          where: { id },
-        })
+        const existing = await prisma.project.findUnique({ where: { id } })
+        if (!existing) {
+          throw createError({ statusCode: 404, statusMessage: 'Project not found' })
+        }
+
+        await prisma.project.delete({ where: { id } })
 
         return { success: true, message: 'Project deleted successfully' }
       }
 
       default:
-        throw createError({
-          statusCode: 405,
-          statusMessage: 'Method Not Allowed',
-        })
+        throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
     }
   } catch (error) {
     console.error('[Project Handler Error]', error)
-    return sendError(event, createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
-    }))
+    return sendError(event, createError({ statusCode: 500, statusMessage: 'Internal Server Error' }))
   }
 })
