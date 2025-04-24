@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
             feature.tasks.map(task => ({
               id: `task-${task.id}`,
               name: task.title,
-              priority: 'Normal', 
+              priority: 'Normal', // You can derive this dynamically if needed
               feature: feature.title,
               featureId: `feature-${feature.id}`,
               epic: epic.title,
