@@ -299,7 +299,7 @@ function deleteRow() {
       result = result.filter(item => item.id !== selectedId.value);
       break;
     case 'feature':
-      result = result.filter(item => item.featureId !== selectedId.value);z``
+      result = result.filter(item => item.featureId !== selectedId.value);
       break;
     case 'epic':
       result = result.filter(item => item.epicId !== selectedId.value);
@@ -334,7 +334,6 @@ function getSeverity(option: string) {
 const onDragStart = (event: DragEvent, row: TableItem) => {
   const type = getItemType(row);
   if (type === 'epic') {
-    // Можно добавить специальную логику для Epic
     console.log('Dragging Epic', row.name);
   }
   draggedRow.value = row;
@@ -348,9 +347,7 @@ const onDrop = (event: DragEvent, targetRow: TableItem) => {
   const draggedType = getItemType(draggedRow.value);
   const targetType = getItemType(targetRow);
   
-  // Пример ограничений:
-  // - Нельзя переносить Epic внутрь Feature или Task
-  // - Feature можно переносить только между Epic
+
   if (draggedType === 'epic' && targetType !== 'epic') {
     console.warn('Cannot drop Epic into non-Epic');
     return;
@@ -361,7 +358,6 @@ const onDrop = (event: DragEvent, targetRow: TableItem) => {
     return;
   }
   
-  // Остальная логика переноса...
   const updatedData = [...props.modelValue];
   const draggedIndex = updatedData.findIndex(item => item.id === draggedRow.value?.id);
   const targetIndex = updatedData.findIndex(item => item.id === targetRow.id);

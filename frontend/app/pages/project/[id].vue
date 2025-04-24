@@ -14,7 +14,7 @@
             <VButton class="save-button" @click="saveProject" :disabled="isSaving">
               {{ isSaving ? "Saving..." : "Save" }}
             </VButton>
-          </div>я
+          </div>
         </section>
       </main>
     </div>
