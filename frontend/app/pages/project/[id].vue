@@ -11,7 +11,7 @@
           <CTableWBS :columns="columns" v-model="tableData" />
 
           <div class="buttons-container">
-            <VButton class="save-button" @click="saveProject" :disabled="isSaving">
+            <VButton class="save-button" @click="updateProject" :disabled="isSaving">
               {{ isSaving ? "Saving..." : "Save" }}
             </VButton>
           </div>
@@ -75,32 +75,25 @@ onMounted(async () => {
   }
 });
 
-const saveProject = async () => {
-  if (!projectName.value || !selectedEvaluationModel.value) return;
-  
-  isSaving.value = true;
-  
+const updateProject = async () => {
   try {
-    const response = await $fetch(store.getApi('/api/project'), {
-      method: "POST",
+    const response = await useFetch(store.getApi(`/api/tableItems/`), {
+      method: 'PUT',
+      query: { projectId : projectId.value }, 
       body: {
-        title: projectName.value,
-        evaluationModelId: selectedEvaluationModel.value,
-        description: "New project created",
+        items: tableData.value,
       },
-    });
+    })
 
-    if (response.success) {
-      router.push(`/project/${response.data.id}`); // Redirect to project page
-    } else {
-      console.error("Failed to save project:", response);
+    if (response.error) {
+      throw new Error(response.error.message)
     }
+
+    console.log('Project updated successfully:', response.data)
   } catch (error) {
-    console.error("Error saving project:", error);
-  } finally {
-    isSaving.value = false;
+    console.error('Failed to update project:', error)
   }
-};
+}
 </script>
 
 <style scoped lang="scss">
