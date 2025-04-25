@@ -39,7 +39,7 @@
         <Tag :value="data.priority" :severity="getSeverity(data.priority)" />
       </template>
 
-      <template #filter="{ filterModel, filterCallback }">
+      <template v-if="col.field !== 'total_estimation'" #filter="{ filterModel, filterCallback }">
         <Select
           v-model="filters[col.field].value"
           @change="filterCallback()"
@@ -76,6 +76,7 @@
               :severity="getSeverity(slotProps.option.value)" />
             </template>
           </Select>
+          <InputNumber v-else-if="field === 'total_estimation'" v-model="data[field]" autofocus />
           <InputText v-else v-model="data[field]" autofocus fluid />
       </template>
     </Column>
@@ -89,6 +90,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Select from 'primevue/select';
 import { FilterMatchMode } from "@primevue/core";
+import { InputNumber } from "primevue";
 
 interface TableItem {
   id: string;

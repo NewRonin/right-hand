@@ -38,6 +38,10 @@
 
           <CTableWBS :columns="columns" v-model="tableData" />
 
+          <div class="estimate-info">
+            <h1>{{ `Total estimate: ${totalEstimate}` }}</h1>
+          </div>
+
           <div class="buttons-container">
             <VButton class="save-button" @click="saveProject" :disabled="isSaving">
               {{ isSaving ? "Saving..." : "Save" }}
@@ -58,6 +62,7 @@ const columns = [
   { key: "feature", field: "feature", header: "Feature" },
   { key: "name", field: "name", header: "Task" },
   { key: "priority", field: "priority", header: "Priority" },
+  { key: "total_estimation", field: "total_estimation", header: "Estimate"},
 ];
 
 const tableData = ref([
@@ -96,6 +101,16 @@ const projectName = ref('')
 const isSaving = ref(false);
 const store = useMainStore();
 const router = useRouter()
+
+const totalEstimate = computed(() => {
+  let result = 0
+
+  for(let i of tableData.value){
+    result+=i.total_estimation
+  }
+
+  return result
+})
 
 const evaluationModels = await $fetch('/api/evaluationModel', {
   method: "GET",
