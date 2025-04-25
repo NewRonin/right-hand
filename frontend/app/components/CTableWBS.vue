@@ -9,6 +9,8 @@
     filterDisplay="row"
     :globalFilterFields="globalFilterFields"
     @row-contextmenu="onRowClick"
+    editMode="cell"
+    @cell-edit-complete="onCellEditComplete"
   >
     <template #header>
       <div class="flex justify-end">
@@ -57,26 +59,24 @@
         </Select>
       </template>
 
-      <!-- <template #body="{ data }">
-        <div @contextmenu.prevent="onRightClick($event, data)">
-          {{ data.name }}
-        </div>
-      </template> -->
-
-      <template #editor="{ data, field }">
-        <template v-if="field !== 'priority'">
-          <InputText v-model="data[field]" autofocus fluid />
-        </template>
-        <template v-else>
-          <!-- <InputNumber
+      <template #editor="{ data, field, index }">
+        <Select
+            v-if="field === 'priority'"
             v-model="data[field]"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
+            :options="options"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select Priority"
+            class="w-full"
             autofocus
-            fluid
-          /> -->
-        </template>
+            :showClear="false"
+          >
+            <template #option="slotProps">
+              <Tag :value="slotProps.option.label" 
+              :severity="getSeverity(slotProps.option.value)" />
+            </template>
+          </Select>
+          <InputText v-else v-model="data[field]" autofocus fluid />
       </template>
     </Column>
   </DataTable>
@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import Select from 'primevue/select';
 import { FilterMatchMode } from "@primevue/core";
 
 interface TableItem {
@@ -114,7 +115,6 @@ const props = defineProps<{
 const emit = defineEmits(["update:modelValue"]);
 const draggedRow = ref<TableItem | null>(null);
 const cm = ref();
-const selectedRow = ref<TableItem | null>(null);
 const selectedId = ref()
 const selectedType = ref()
 
@@ -167,11 +167,13 @@ const contextMenuItems = ref([
   { label: 'Delete', icon: 'pi pi-trash', command: () => deleteRow() }
 ]);
 
-function onRightClick(event: MouseEvent, row: TableItem) {
-  console.log(row)
-  selectedRow.value = row;
-  cm.value.show(event);
+function onPriorityChange(value: any, data: TableItem, field: string, index: number) {
+  console.log('1')
+  const updatedData = [...props.modelValue];
+  updatedData[index][field] = value;
+  emit('update:modelValue', updatedData);
 }
+
 
 function generateId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
@@ -213,6 +215,39 @@ function onRowClick(event: { originalEvent: MouseEvent; data: TableItem; index: 
 
   cm.value.show(event.originalEvent);
 }
+
+function onCellEditComplete(event: {
+  originalEvent: Event,
+  data: TableItem,
+  newValue: any,
+  field: string,
+  index: number
+}) {
+  const updatedData = [...props.modelValue];
+  const target = updatedData[event.index];
+
+  if (event.field === 'epic') {
+    const epicId = target.epicId;
+    updatedData.forEach(item => {
+      if (item.epicId === epicId) {
+        item.epic = event.newValue;
+      }
+    });
+  } else if (event.field === 'feature') {
+    const featureId = target.featureId;
+    updatedData.forEach(item => {
+      if (item.featureId === featureId) {
+        item.feature = event.newValue;
+      }
+    });
+  } else {
+    console.log(event.newValue, event.data, event.field)
+    updatedData[event.index][event.field] = event.newValue;
+  }
+
+  emit('update:modelValue', updatedData);
+}
+
 
 
 function addTask() {
