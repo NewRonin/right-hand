@@ -56,7 +56,7 @@ import VModal from './VModal.vue';
 
 const links: HeaderLink[] = [
   { name: "Home", link: "/", enabled: true },
-  { name: "Projects", link: "/project", enabled: true },
+  { name: "Projects", link: "/projects", enabled: true },
   { name: "Roles", link: "/roles", enabled: true },
   { name: "Employees", link: "/employees", enabled: true },
 ];

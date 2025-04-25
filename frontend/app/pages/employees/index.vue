@@ -1,7 +1,7 @@
 <template>
   <Transition name="fade">
     <div class="page-container">
-      <main>Empty page</main>
+      <main>Currently in progress...</main>
     </div>
   </Transition>
 </template>

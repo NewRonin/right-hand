@@ -25,47 +25,30 @@ export default defineEventHandler(async (event) => {
           const projects = await prisma.project.findMany({
             include: {
               evaluationModel: true,
-              epics: {
-                include: {
-                  features: {
-                    include: {
-                      tasks: true,
-                    },
-                  },
-                },
-              },
             },
           })
           return { success: true, data: projects }
         }
-
+      
         const id = Number(params.id)
         if (isNaN(id)) {
           throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
-
+      
         const project = await prisma.project.findUnique({
           where: { id },
           include: {
             evaluationModel: true,
-            epics: {
-              include: {
-                features: {
-                  include: {
-                    tasks: true,
-                  },
-                },
-              },
-            },
           },
         })
-
+      
         if (!project) {
           throw createError({ statusCode: 404, statusMessage: 'Project not found' })
         }
-
+      
         return { success: true, data: project }
       }
+      
 
       case 'POST': {
         const body = await readBody<ProjectCreateBody>(event)

@@ -428,5 +428,6 @@ const onDragOver = (event: DragEvent) => {
 
 .p-datatable-table-container, .p-datatable-header {
   width: 100dvw;
+  max-width: 100%;
 }
 </style>

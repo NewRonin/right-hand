@@ -4,19 +4,22 @@
       <main>
         <section class="table-section">
           <div class="header-info">
-            <h2> Project name: {{projectName || 'Unknown title' }}</h2>
-            <p> Model: {{ selectedEvaluationModel || 'Unknown evaluation model' }}</p>
+            <h1 class="project-title">{{projectName || 'Unknown title' }}</h1>
+            <div class="model-badge">{{ selectedEvaluationModel || 'Unknown evaluation model' }}</div>
           </div>
 
           <CTableWBS :columns="columns" v-model="tableData" />
 
           <div class="estimate-info">
-            <h1>{{ `Total estimate: ${totalEstimate}` }}</h1>
+            <div class="total-estimate">
+              <span class="label">Total estimate:</span>
+              <span class="value">{{ totalEstimate }}</span>
+            </div>
           </div>
 
           <div class="buttons-container">
             <VButton class="save-button" @click="updateProject" :disabled="isSaving">
-              {{ isSaving ? "Saving..." : "Save" }}
+              {{ isSaving ? "Saving..." : "Save Changes" }}
             </VButton>
           </div>
         </section>
@@ -113,86 +116,127 @@ const updateProject = async () => {
 <style scoped lang="scss">
 .page-container {
   position: relative;
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: 5.6rem;
-
-  @media (max-width: 833px) {
-    padding-top: 0;
-    min-height: 100%;
-  }
-
-  main {
-    width: 80%;
-    height: 100%;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: flex-start;
-    align-items: center;
-
-    @media (max-width: 833px) {
-      height: 100%;
-      justify-content: space-between;
-      padding-bottom: 2rem;
-    }
-  }
-}
-
-.selection-section {
+  min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background-color: #f5f7fa;
+  padding: 2rem 1rem;
+
+  main {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-flow: column nowrap;
+  }
 }
 
 .table-section {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-  .header-info{
-    margin-bottom: 4rem;
+  .header-info {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .project-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .model-badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      background: var(--main-transperent);
+      color: var(--main);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
   }
 }
 
-.selection-container {
-  width: 100%;
-  max-width: 500px;
-  text-align: center;
+.estimate-info {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eaeef2;
+
+  .total-estimate {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .label {
+      font-size: 1.1rem;
+      color: #7f8c8d;
+    }
+
+    .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--main);
+    }
+  }
 }
 
 .buttons-container {
-  width: 100%;
-  height: 4rem;
-  max-width: 500px;
+  margin-top: 3rem;
   display: flex;
-  justify-content: center;
-  margin-top: 4rem;
+  justify-content: flex-end;
+
+  .save-button {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+    min-width: 180px;
+  }
 }
 
-.next-button {
-  width: 100%;
-  height: 100%;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-  justify-content: center;
+/* Анимация перехода */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
 
-  &:hover {
-    background-color: var(--accent);
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .table-section {
+    padding: 1.5rem;
+
+    .header-info {
+      .project-title {
+        font-size: 1.5rem;
+      }
+    }
   }
 
-  &:disabled {
-    background-color: #dcdcdc;
-    cursor: not-allowed;
+  .estimate-info {
+    .total-estimate {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+
+  .buttons-container {
+    justify-content: center;
   }
 }
 </style>
