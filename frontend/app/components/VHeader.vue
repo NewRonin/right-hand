@@ -105,8 +105,8 @@ header {
     align-items: center;
 
     border-radius: 0 0 2rem 2rem;
-    background: var(--light-white);
-    color: var(--base-black);
+    background: var(--accent);
+    color: var(--light-white);
 
     -webkit-box-shadow: 0px 4px 4px 0px #00000040;
     -moz-box-shadow: 0px 4px 4px 0px #00000040;
@@ -213,7 +213,7 @@ header {
 .link {
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
   @include hover {
-    color: var(--main);
+    color: var(--main-transperent);
     cursor: pointer;
   }
 

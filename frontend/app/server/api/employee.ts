@@ -20,42 +20,41 @@ export default defineEventHandler(async (event) => {
   try {
     switch (method) {
       case 'GET': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
+        // Если есть ID — вернуть одного сотрудника, иначе всех
+        if (params && params.id && !isNaN(Number(params.id))) {
+          const id = Number(params.id)
+
+          const employee = await prisma.employee.findUnique({
+            where: { id },
+            include: {
+              seniorityLevel: true,
+              role: true,
+              employeesOnProjects: true,
+            },
           })
-        }
 
-        const id = Number(params.id)
+          if (!employee) {
+            throw createError({ statusCode: 404, statusMessage: 'Employee not found' })
+          }
 
-        const employee = await prisma.employee.findUnique({
-          where: { id },
-          include: {
-            seniorityLevel: true,
-            role: true,
-            employeesOnProjects: true,
-          },
-        })
-
-        if (!employee) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: 'Employee not found',
+          return { success: true, data: employee }
+        } else {
+          const employees = await prisma.employee.findMany({
+            include: {
+              seniorityLevel: true,
+              role: true,
+              employeesOnProjects: true,
+            },
           })
+          return { success: true, data: employees }
         }
-
-        return { success: true, data: employee }
       }
 
       case 'POST': {
         const body = await readBody<EmployeeCreateBody>(event)
 
         if (!body.name || !body.seniorityLevelId || !body.roleId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Missing or invalid body parameters',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Missing or invalid body parameters' })
         }
 
         const createdEmployee = await prisma.employee.create({
@@ -71,20 +70,14 @@ export default defineEventHandler(async (event) => {
 
       case 'PUT': {
         if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
 
         const id = Number(params.id)
         const body = await readBody<EmployeeUpdateBody>(event)
 
         if (!body.name || !body.seniorityLevelId || !body.roleId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Missing or invalid body parameters',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Missing or invalid body parameters' })
         }
 
         const updatedEmployee = await prisma.employee.update({
@@ -101,32 +94,21 @@ export default defineEventHandler(async (event) => {
 
       case 'DELETE': {
         if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
 
         const id = Number(params.id)
 
-        await prisma.employee.delete({
-          where: { id },
-        })
+        await prisma.employee.delete({ where: { id } })
 
         return { success: true, message: 'Employee deleted successfully' }
       }
 
       default:
-        throw createError({
-          statusCode: 405,
-          statusMessage: 'Method Not Allowed',
-        })
+        throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
     }
   } catch (error) {
     console.error('[Employee Handler Error]', error)
-    return sendError(event, createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
-    }))
+    return sendError(event, createError({ statusCode: 500, statusMessage: 'Internal Server Error' }))
   }
 })

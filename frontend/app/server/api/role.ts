@@ -3,52 +3,52 @@ import { sendError } from "h3"
 
 interface RoleCreateBody {
   displayName: string
-  seniorityCoefficient: number
+  name: string
 }
 
 interface RoleUpdateBody {
   displayName: string
-  seniorityCoefficient: number
+  name: string
 }
 
 export default defineEventHandler(async (event) => {
-  const params = getQuery(event)
   const method = getMethod(event)
+  const params = getQuery(event)
 
   try {
     switch (method) {
       case 'GET': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
+        // GET by ID
+        if (params.id) {
+          const id = Number(params.id)
+          if (isNaN(id)) {
+            throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
+          }
+
+          const role = await prisma.role.findUnique({
+            where: { id },
+            include: {
+              employees: true,
+              tasks: true,
+            },
           })
+
+          if (!role) {
+            throw createError({ statusCode: 404, statusMessage: 'Role not found' })
+          }
+
+          return { success: true, data: role }
         }
 
-        const id = Number(params.id)
-
-        const role = await prisma.role.findUnique({
-          where: { id },
-          include: {
-            employees: true,
-            tasks: true,
-          },
-        })
-
-        if (!role) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: 'Role not found',
-          })
-        }
-
-        return { success: true, data: role }
+        // GET all
+        const roles = await prisma.role.findMany()
+        return { success: true, data: roles }
       }
 
       case 'POST': {
         const body = await readBody<RoleCreateBody>(event)
 
-        if (!body.displayName || body.seniorityCoefficient === undefined) {
+        if (!body.displayName || !body.name) {
           throw createError({
             statusCode: 400,
             statusMessage: 'Missing or invalid body parameters',
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
         const createdRole = await prisma.role.create({
           data: {
             display_name: body.displayName,
-            seniority_coefficient: body.seniorityCoefficient,
+            name: body.name,
           },
         })
 
@@ -66,17 +66,14 @@ export default defineEventHandler(async (event) => {
       }
 
       case 'PUT': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
+        const id = Number(params.id)
+        if (!params.id || isNaN(id)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
         }
 
-        const id = Number(params.id)
         const body = await readBody<RoleUpdateBody>(event)
 
-        if (!body.displayName || body.seniorityCoefficient === undefined) {
+        if (!body.displayName || !body.name) {
           throw createError({
             statusCode: 400,
             statusMessage: 'Missing or invalid body parameters',
@@ -87,7 +84,7 @@ export default defineEventHandler(async (event) => {
           where: { id },
           data: {
             display_name: body.displayName,
-            seniority_coefficient: body.seniorityCoefficient,
+            name: body.name,
           },
         })
 
@@ -95,14 +92,10 @@ export default defineEventHandler(async (event) => {
       }
 
       case 'DELETE': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
-          })
-        }
-
         const id = Number(params.id)
+        if (!params.id || isNaN(id)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid ID parameter' })
+        }
 
         await prisma.role.delete({
           where: { id },
@@ -112,16 +105,10 @@ export default defineEventHandler(async (event) => {
       }
 
       default:
-        throw createError({
-          statusCode: 405,
-          statusMessage: 'Method Not Allowed',
-        })
+        throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
     }
   } catch (error) {
     console.error('[Role Handler Error]', error)
-    return sendError(event, createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
-    }))
+    return sendError(event, createError({ statusCode: 500, statusMessage: 'Internal Server Error' }))
   }
 })

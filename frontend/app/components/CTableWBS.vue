@@ -15,9 +15,6 @@
     <template #header>
       <div class="flex justify-end">
         <IconField>
-          <InputIcon>
-            <i class="pi pi-search" />
-          </InputIcon>
           <InputText
             v-model="filters['global'].value"
             placeholder="Keyword Search"
@@ -39,7 +36,7 @@
         <Tag :value="data.priority" :severity="getSeverity(data.priority)" />
       </template>
 
-      <template v-if="col.field !== 'total_estimation'" #filter="{ filterModel, filterCallback }">
+      <template #filter="{ filterModel, filterCallback }">
         <Select
           v-model="filters[col.field].value"
           @change="filterCallback()"

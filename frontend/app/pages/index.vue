@@ -3,7 +3,7 @@
     <div class="page-container">
       <main>
         <section class="hero">
-          <h1>Project Evaluation - Right Hand</h1>
+          <h1>Project Evaluation</h1>
           <p>Automate your project estimation process with our intelligent tool.</p>
           <VButton @click="navigateTo('/projects')">Start Now</VButton>
         </section>
@@ -11,9 +11,9 @@
         <section class="features">
           <h2>Why us?</h2>
           <ul>
-            <li>⚡ Instant project evaluation</li>
-            <li>🧠 Tools for analytics</li>
-            <li>📊 User-friendly visualizations</li>
+            <li>- Instant project evaluation</li>
+            <li>- Tools for analytics</li>
+            <li>- User-friendly visualizations</li>
           </ul>
         </section>
 
