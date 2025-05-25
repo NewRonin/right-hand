@@ -10,7 +10,7 @@
 
           <CTableWBS :columns="columns" v-model="tableData" />
 
-          <div class="estimate-info">
+          <div v-if="totalEstimate" class="estimate-info">
             <div class="total-estimate">
               <span class="label">Total estimate:</span>
               <span class="value">{{ totalEstimate }}</span>
@@ -32,24 +32,19 @@
 
 const route = useRoute()
 
-const columns = [
+const columns : Ref<TableColumn[]> = ref([
   { key: "epic", field: "epic", header: "Epic" },
   { key: "feature", field: "feature", header: "Feature" },
   { key: "name", field: "name", header: "Task" },
   { key: "priority", field: "priority", header: "Priority" },
   { key: "total_estimation", field: "total_estimation", header: "Estimate"},
-];
+]);
 
 const tableData = ref([]);
 const selectedEvaluationModel = ref();
 const projectName = ref('')
 const isSaving = ref(false);
 const store = useMainStore();
-const router = useRouter()
-
-const evaluationModels = await $fetch('/api/evaluationModel', {
-  method: "GET",
-});
 
 const projectId = computed(() => route.params.id);
 const projectLoaded = ref(false);
@@ -94,23 +89,54 @@ onMounted(async () => {
 
 const updateProject = async () => {
   try {
-    const response = await useFetch(store.getApi(`/api/tableItems/`), {
+    const data = await $fetch(store.getApi('/api/tableItems/'), {
       method: 'PUT',
-      query: { projectId : projectId.value }, 
+      params: { projectId: projectId.value }, 
       body: {
         items: tableData.value,
       },
-    })
+    });
 
-    if (response.error) {
-      throw new Error(response.error.message)
-    }
-
-    console.log('Project updated successfully:', response.data)
+    console.log('Project updated successfully:', data);
+    return data;
   } catch (error) {
-    console.error('Failed to update project:', error)
+    console.error('Failed to update project:', error);
+    throw error; 
   }
-}
+};
+
+watch (selectedEvaluationModel, () => {
+  if (selectedEvaluationModel.value === "PERT") {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "optimistic_estimation", field: "optimistic_estimation", header: "Optimistic"},
+      { key: "realistic_estimation", field: "realistic_estimation", header: "Realistic"},
+      { key: "pessimistic_estimation", field: "pessimistic_estimation", header: "Pessimistic"},
+      { key: "total_estimation", field: "total_estimation", header: "Estimate", disabled: true},
+    ]
+  }
+  else if (selectedEvaluationModel.value === "T-Shirt Size") {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "t_shirt_size", field: "t_shirt_size", header: "T-Shirt"},
+    ]
+  }
+  else {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "total_estimation", field: "total_estimation", header: "Estimate"},
+    ]
+  }
+})
 </script>
 
 <style scoped lang="scss">

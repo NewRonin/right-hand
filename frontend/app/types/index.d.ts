@@ -34,6 +34,13 @@ declare global {
     priority?: string;
   }
 
+  interface TableColumn {
+    key: string;
+    field: string;
+    header: string;
+    disabled? : boolean,
+  }
+
   type TableSelectedItems = {
     epicIndex: number, 
     featureIndex: number, 

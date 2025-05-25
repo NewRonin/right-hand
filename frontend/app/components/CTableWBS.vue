@@ -36,7 +36,14 @@
         <Tag :value="data.priority" :severity="getSeverity(data.priority)" />
       </template>
 
-      <template #filter="{ filterModel, filterCallback }">
+      <template
+        v-if="
+          col.field !== 'optimistic_estimation' &&
+          col.field !== 'realistic_estimation' &&
+          col.field !== 'pessimistic_estimation'
+        "
+        #filter="{ filterModel, filterCallback }"
+      >
         <Select
           v-model="filters[col.field].value"
           @change="filterCallback()"
@@ -58,23 +65,30 @@
 
       <template #editor="{ data, field, index }">
         <Select
-            v-if="field === 'priority'"
-            v-model="data[field]"
-            :options="options"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select Priority"
-            class="w-full"
-            autofocus
-            :showClear="false"
-          >
-            <template #option="slotProps">
-              <Tag :value="slotProps.option.label" 
-              :severity="getSeverity(slotProps.option.value)" />
-            </template>
-          </Select>
-          <InputNumber v-else-if="field === 'total_estimation'" v-model="data[field]" autofocus />
-          <InputText v-else v-model="data[field]" autofocus fluid />
+          v-if="field === 'priority'"
+          v-model="data[field]"
+          :options="options"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select Priority"
+          class="w-full"
+          autofocus
+          :showClear="false"
+        >
+          <template #option="slotProps">
+            <Tag
+              :value="slotProps.option.label"
+              :severity="getSeverity(slotProps.option.value)"
+            />
+          </template>
+        </Select>
+        <InputNumber
+          v-else-if="field === 'total_estimation'"
+          v-model="data[field]"
+          :autofocus="col"
+          :disabled="col.disabled"
+        />
+        <InputText v-else v-model="data[field]" autofocus fluid />
       </template>
     </Column>
   </DataTable>
@@ -98,12 +112,6 @@ interface TableItem {
   epic: string;
   epicId: string;
   type: 'epic' | 'feature' | 'task' | string
-}
-
-interface TableColumn {
-  key: string;
-  field: string;
-  header: string;
 }
 
 const props = defineProps<{
@@ -222,31 +230,42 @@ function onCellEditComplete(event: {
   field: string,
   index: number
 }) {
+  // Создаем копию данных
   const updatedData = [...props.modelValue];
   const target = updatedData[event.index];
 
-  if (event.field === 'epic') {
-    const epicId = target.epicId;
-    updatedData.forEach(item => {
-      if (item.epicId === epicId) {
-        item.epic = event.newValue;
-      }
-    });
-  } else if (event.field === 'feature') {
-    const featureId = target.featureId;
-    updatedData.forEach(item => {
-      if (item.featureId === featureId) {
-        item.feature = event.newValue;
-      }
-    });
-  } else {
-    console.log(event.newValue, event.data, event.field)
-    updatedData[event.index][event.field] = event.newValue;
+  // Обработка изменений epic/feature с групповым обновлением
+  if (event.field === 'epic' || event.field === 'feature') {
+    const idField = `${event.field}Id` as 'epicId' | 'featureId';
+    const idValue = target[idField];
+
+    if (idValue) {
+      updatedData.forEach(item => {
+        if (item[idField] === idValue) {
+          item[event.field] = event.newValue;
+        }
+      });
+    }
+  }
+  // Обработка всех остальных полей
+  else {
+    target[event.field] = event.newValue;
+  }
+
+  // Обработка изменений оценок
+  if (['optimistic_estimation', 'realistic_estimation', 'pessimistic_estimation'].includes(event.field)) {
+    target[event.field] = Number(event.newValue);
+
+    const opt = Number(target.optimistic_estimation) || 0;
+    const real = Number(target.realistic_estimation) || 0;
+    const pess = Number(target.pessimistic_estimation) || 0;
+
+    // Расчет PERT-оценки с округлением до 2 знаков
+    target.total_estimation = parseFloat(((opt + 4 * real + pess) / 6).toFixed(2));
   }
 
   emit('update:modelValue', updatedData);
 }
-
 
 
 function addTask() {
@@ -344,10 +363,37 @@ function deleteRow() {
   emit('update:modelValue', result);
 }
 
-
-watch(() => props.modelValue, generateFilterOptions, { immediate: true });
+watch(() => props.modelValue, (newValue, oldValue) => {
+  // Вызываем существующую функцию
+  generateFilterOptions();
+  
+  if (!newValue?.length) {
+    initializeDefaultData();
+  }
+  
+}, { immediate: true });
 
 watch(() => props.columns, generateFilterOptions, { immediate: true });
+
+
+
+function initializeDefaultData() {
+  if (!props.modelValue.length) {
+    const newEpicId = generateId('epic');
+
+    const newTask: TableItem = {
+      id: generateId('task'),
+      name: 'New Epic Task',
+      priority: 'Normal',
+      epic: newEpicId,
+      epicId: newEpicId,
+      feature: generateId('feature'),
+      featureId: generateId('feature'),
+    };
+
+    emit('update:modelValue', [...props.modelValue, newTask]);
+  }
+}
 
 function getSeverity(option: string) {
   let severity = "info";
@@ -365,6 +411,7 @@ function getSeverity(option: string) {
   return severity;
 }
 
+
 const onDragStart = (event: DragEvent, row: TableItem) => {
   const type = getItemType(row);
   if (type === 'epic') {
@@ -377,31 +424,31 @@ const onDragStart = (event: DragEvent, row: TableItem) => {
 const onDrop = (event: DragEvent, targetRow: TableItem) => {
   event.preventDefault();
   if (!draggedRow.value) return;
-  
+
   const draggedType = getItemType(draggedRow.value);
   const targetType = getItemType(targetRow);
-  
+
 
   if (draggedType === 'epic' && targetType !== 'epic') {
     console.warn('Cannot drop Epic into non-Epic');
     return;
   }
-  
+
   if (draggedType === 'feature' && targetType !== 'epic') {
     console.warn('Can only drop Feature into Epic');
     return;
   }
-  
+
   const updatedData = [...props.modelValue];
   const draggedIndex = updatedData.findIndex(item => item.id === draggedRow.value?.id);
   const targetIndex = updatedData.findIndex(item => item.id === targetRow.id);
-  
+
   if (draggedIndex !== -1 && targetIndex !== -1) {
     const [removed] = updatedData.splice(draggedIndex, 1);
     updatedData.splice(targetIndex, 0, removed);
     emit("update:modelValue", updatedData);
   }
-  
+
   draggedRow.value = null;
 };
 
@@ -423,7 +470,8 @@ const onDragOver = (event: DragEvent) => {
   border-radius: 10px;
 }
 
-.p-datatable-table-container, .p-datatable-header {
+.p-datatable-table-container,
+.p-datatable-header {
   width: 100dvw;
   max-width: 100%;
 }

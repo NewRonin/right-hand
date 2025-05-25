@@ -147,7 +147,7 @@ const saveProject = async () => {
       });
 
       if (tableResponse.success) {
-        router.push(`/projects/${projectResponse.data.id}`); 
+        navigateTo(`/projects/${projectResponse.data.id}`); 
       } else {
         console.error("Failed to save table items:", tableResponse);
       }

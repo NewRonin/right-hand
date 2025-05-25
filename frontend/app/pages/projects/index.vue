@@ -15,7 +15,6 @@
 </template>
 
 <script setup>
-const router = useRouter();
 const store = useMainStore();
 
 const {data: projects} = await useFetch(
@@ -27,11 +26,11 @@ const {data: projects} = await useFetch(
 );
 
 const openProject = (id) => {
-  router.push(`/projects/${id}`);
+  navigateTo(`/projects/${id}`);
 };
 
 const redirectToNewProject = () => {
-  router.push("/projects/new");
+  navigateTo("/projects/new");
 };
 
 </script>
