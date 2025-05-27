@@ -17,6 +17,7 @@ export default defineNuxtConfig({
 
   css: [
     "@/assets/scss/bundle.scss",
+    '@/assets/scss/frappe-gantt.css',
   ],
 
   modules: [

@@ -23,6 +23,7 @@
     "@primeuix/themes": "^1.0.0",
     "@primevue/core": "^4.3.3",
     "@types/node": "^22.14.0",
+    "frappe-gantt": "^1.0.3",
     "maska": "^2.1.10",
     "normalize.css": "^8.0.1",
     "pinia": "^2.2.2",

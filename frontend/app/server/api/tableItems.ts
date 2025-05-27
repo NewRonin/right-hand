@@ -18,6 +18,11 @@ export default defineEventHandler(async (event) => {
     pessimistic_estimation?: number
     t_shirt_size?: string
     total_estimation?: number
+    start_date?: string | Date
+    end_date?: string | Date
+    extra_coefficient?: number
+    extra_coefficient_description?: string
+    progress?: number,
   }
 
   try {
@@ -35,7 +40,15 @@ export default defineEventHandler(async (event) => {
               include: {
                 features: {
                   include: {
-                    tasks: true,
+                    tasks: {
+                      include: {
+                        taskRoles: {
+                          include: {
+                            role: true
+                          }
+                        }
+                      }
+                    },
                   },
                 },
               },
@@ -61,7 +74,12 @@ export default defineEventHandler(async (event) => {
               pessimistic_estimation: task.pessimistic_estimation,
               t_shirt_size: task.t_shirt_size,
               total_estimation: task.total_estimation,
-              priority: task.taskRoles?.role?.display_name || 'Normal',
+              start_date: task.start_date,
+              end_date: task.end_date,
+              extra_coefficient: task.extra_coefficient,
+              extra_coefficient_description: task.extra_coefficient_description,
+              progress: task.progress,
+              priority: task.taskRoles?.[0]?.role?.display_name || 'Normal',
             }))
           )
         )
@@ -80,9 +98,8 @@ export default defineEventHandler(async (event) => {
 
         const { items = [] } = body as { projectId: number; items: TaskItem[] }
 
-        // Для PUT сначала удаляем существующие данные
-         // Проверяем существование проекта
-         const projectExists = await prisma.project.findUnique({
+        // Проверяем существование проекта
+        const projectExists = await prisma.project.findUnique({
           where: { id: projectId }
         })
         if (!projectExists) {
@@ -113,7 +130,7 @@ export default defineEventHandler(async (event) => {
           const epic = await prisma.epic.create({
             data: {
               title: item?.epic || '',
-              total_estimation: 0, // Обязательное поле
+              total_estimation: 0,
               project_id: projectId,
             },
           })
@@ -129,8 +146,8 @@ export default defineEventHandler(async (event) => {
           const feature = await prisma.feature.create({
             data: {
               title: item?.feature || '',
-              total_estimation: 0, // Обязательное поле
-              epic_id: epicIdMap.get(item.epicId)!,
+              total_estimation: 0,
+              epic_id: epicIdMap.get(item!.epicId)!,
             },
           })
           featureIdMap.set(featureId, feature.id)
@@ -145,9 +162,12 @@ export default defineEventHandler(async (event) => {
           pessimistic_estimation: item.pessimistic_estimation ?? null,
           t_shirt_size: item.t_shirt_size ?? null,
           total_estimation: item.total_estimation ?? null,
+          start_date: item.start_date ? new Date(item.start_date) : null,
+          end_date: item.end_date ? new Date(item.end_date) : null,
+          extra_coefficient: item.extra_coefficient ?? null,
+          extra_coefficient_description: item.extra_coefficient_description ?? null,
+          progress: item.progress ?? null
         }))
-
-        console.log(tasksData, items)
 
         await prisma.task.createMany({
           data: tasksData,
@@ -161,7 +181,15 @@ export default defineEventHandler(async (event) => {
               include: {
                 features: {
                   include: {
-                    tasks: true,
+                    tasks: {
+                      include: {
+                        taskRoles: {
+                          include: {
+                            role: true
+                          }
+                        }
+                      }
+                    },
                   },
                 },
               },
@@ -191,7 +219,13 @@ export default defineEventHandler(async (event) => {
                   realistic_estimation: task.realistic_estimation,
                   pessimistic_estimation: task.pessimistic_estimation,
                   t_shirt_size: task.t_shirt_size,
-                  total_estimation: task.total_estimation
+                  total_estimation: task.total_estimation,
+                  start_date: task.start_date,
+                  end_date: task.end_date,
+                  extra_coefficient: task.extra_coefficient,
+                  extra_coefficient_description: task.extra_coefficient_description,
+                  progress: task.progress,
+                  priority: task.taskRoles?.[0]?.role?.display_name || 'Normal'
                 }))
               }))
             }))

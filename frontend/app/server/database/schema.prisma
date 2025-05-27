@@ -29,9 +29,10 @@ model Employee {
   name                String
   seniority_level_id  Int
   roles_id            Int
-  seniorityLevel      SeniorityLevel   @relation(fields: [seniority_level_id], references: [id])
-  role                Role             @relation(fields: [roles_id], references: [id])
+  seniorityLevel      SeniorityLevel    @relation(fields: [seniority_level_id], references: [id])
+  role                Role              @relation(fields: [roles_id], references: [id])
   employeesOnProjects EmployeeOnProject[]
+  tasks               Task[]            
 }
 
 model EvaluationModel {
@@ -79,17 +80,24 @@ model Feature {
 }
 
 model Task {
-  id                  Int       @id @default(autoincrement())
-  feature_id          Int
-  title               String
-  optimistic_estimation Int?
-  realistic_estimation Int?
-  pessimistic_estimation Int?
-  t_shirt_size        TaskSize?
-  total_estimation    Float?
-  feature             Feature   @relation(fields: [feature_id], references: [id])
-  taskRoles           TaskRole[]
-  timelines           Timeline[]
+  id                      Int       @id @default(autoincrement())
+  feature_id              Int
+  employee_id             Int?      @map("employee_id")
+  title                   String
+  optimistic_estimation   Int?
+  realistic_estimation    Int?
+  pessimistic_estimation  Int?
+  t_shirt_size            TaskSize?
+  total_estimation        Float?
+  start_date              DateTime? 
+  end_date                DateTime?  
+  progress                Int?
+  extra_coefficient       Float?     
+  extra_coefficient_description String? 
+  feature                 Feature   @relation(fields: [feature_id], references: [id])
+  employee                Employee? @relation(fields: [employee_id], references: [id])
+  taskRoles               TaskRole[]
+  timelines               Timeline[]
 }
 
 model TaskRole {
