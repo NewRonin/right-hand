@@ -115,6 +115,8 @@ watch (selectedEvaluationModel, () => {
       { key: "optimistic_estimation", field: "optimistic_estimation", header: "Optimistic"},
       { key: "realistic_estimation", field: "realistic_estimation", header: "Realistic"},
       { key: "pessimistic_estimation", field: "pessimistic_estimation", header: "Pessimistic"},
+      { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
+      { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
       { key: "total_estimation", field: "total_estimation", header: "Estimate", disabled: true},
     ]
   }
@@ -133,6 +135,8 @@ watch (selectedEvaluationModel, () => {
       { key: "feature", field: "feature", header: "Feature" },
       { key: "name", field: "name", header: "Task" },
       { key: "priority", field: "priority", header: "Priority" },
+      { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
+      { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
       { key: "total_estimation", field: "total_estimation", header: "Estimate"},
     ]
   }

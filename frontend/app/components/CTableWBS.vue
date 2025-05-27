@@ -40,7 +40,10 @@
         v-if="
           col.field !== 'optimistic_estimation' &&
           col.field !== 'realistic_estimation' &&
-          col.field !== 'pessimistic_estimation'
+          col.field !== 'pessimistic_estimation' &&
+          col.field !== 'extra_coefficient' &&
+          col.field !== 'extra_coefficient_description' &&
+          col.field !== 'total_estimate'
         "
         #filter="{ filterModel, filterCallback }"
       >
@@ -83,7 +86,7 @@
           </template>
         </Select>
         <InputNumber
-          v-else-if="field === 'total_estimation'"
+          v-else-if="field === 'total_estimation' || field === 'optimistic_estimation' || field === 'realistic_estimation' || field === 'pessimistic_estimation' ||  field === 'extra_coefficient'"
           v-model="data[field]"
           :autofocus="col"
           :disabled="col.disabled"
@@ -253,7 +256,7 @@ function onCellEditComplete(event: {
   }
 
   // Обработка изменений оценок
-  if (['optimistic_estimation', 'realistic_estimation', 'pessimistic_estimation'].includes(event.field)) {
+  if (['optimistic_estimation', 'realistic_estimation', 'pessimistic_estimation', 'extra_coefficient'].includes(event.field)) {
     target[event.field] = Number(event.newValue);
 
     const opt = Number(target.optimistic_estimation) || 0;
@@ -262,6 +265,10 @@ function onCellEditComplete(event: {
 
     // Расчет PERT-оценки с округлением до 2 знаков
     target.total_estimation = parseFloat(((opt + 4 * real + pess) / 6).toFixed(2));
+  }
+
+  if (target.extra_coefficient) {
+    target.total_estimation = target.total_estimation * target.extra_coefficient
   }
 
   emit('update:modelValue', updatedData);
