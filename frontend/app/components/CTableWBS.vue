@@ -309,7 +309,9 @@ function addFeature() {
   };
 
   const currentData = [...props.modelValue];
-  const currentIndex = currentData.findIndex(item => item.featureId === selectedRow.id);
+  const currentIndex = currentData.findIndex(item => item.featureId === selectedRow.featureId);
+
+  console.log(selectedRow, currentIndex)
 
   const featureGroupIndex = currentData.findIndex((item, i) =>
     i > currentIndex &&
@@ -317,7 +319,7 @@ function addFeature() {
     item.featureId !== selectedRow?.featureId
   );
 
-  const insertIndex = featureGroupIndex !== -1 ? featureGroupIndex : currentData.length;
+  const insertIndex = featureGroupIndex !== -1 ? featureGroupIndex : currentIndex;
 
   currentData.splice(insertIndex, 0, newTask);
   emit('update:modelValue', currentData);
