@@ -20,7 +20,6 @@ const store = useMainStore();
 const {data: projects} = await useFetch(
   store.getApi("/api/project"), {
     onResponse(response){
-      console.log(response)
     }
   }
 );

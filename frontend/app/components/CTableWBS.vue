@@ -178,7 +178,6 @@ const contextMenuItems = ref([
 ]);
 
 function onPriorityChange(value: any, data: TableItem, field: string, index: number) {
-  console.log('1')
   const updatedData = [...props.modelValue];
   updatedData[index][field] = value;
   emit('update:modelValue', updatedData);
@@ -219,7 +218,6 @@ function onRowClick(event: { originalEvent: MouseEvent; data: TableItem; index: 
     entityId = current.featureId;
   }
 
-  console.log(`Clicked ${entityType} with ID: ${entityId}`);
   selectedId.value = entityId
   selectedType.value = entityType
 
@@ -318,8 +316,6 @@ function addFeature() {
   const currentData = [...props.modelValue];
   const currentIndex = currentData.findIndex(item => item.featureId === selectedRow.featureId);
 
-  console.log(selectedRow, currentIndex)
-
   const featureGroupIndex = currentData.findIndex((item, i) =>
     i > currentIndex &&
     item.epicId === selectedRow?.epicId &&
@@ -368,7 +364,6 @@ function deleteRow() {
       break;
   }
 
-  console.log(result)
   emit('update:modelValue', result);
 }
 

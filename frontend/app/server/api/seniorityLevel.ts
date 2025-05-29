@@ -4,11 +4,13 @@ import { sendError } from "h3"
 interface SeniorityLevelCreateBody {
   name: string
   displayName: string
+  seniority_coefficient: number
 }
 
 interface SeniorityLevelUpdateBody {
   name: string
   displayName: string
+  seniority_coefficient: number
 }
 
 export default defineEventHandler(async (event) => {
@@ -18,50 +20,50 @@ export default defineEventHandler(async (event) => {
   try {
     switch (method) {
       case 'GET': {
-        if (!params || !params.id || isNaN(Number(params.id))) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid ID parameter',
+        if (params && params.id && !isNaN(Number(params.id))) {
+          const id = Number(params.id)
+
+          const seniorityLevel = await prisma.seniorityLevel.findUnique({
+            where: { id },
+            include: { employees: true },
           })
-        }
 
-        const id = Number(params.id)
+          if (!seniorityLevel) {
+            throw createError({
+              statusCode: 404,
+              statusMessage: 'Seniority Level not found',
+            })
+          }
 
-        const seniorityLevel = await prisma.seniorityLevel.findUnique({
-          where: { id },
-          include: {
-            employees: true,
-          },
-        })
-
-        if (!seniorityLevel) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: 'Seniority Level not found',
+          return { success: true, data: seniorityLevel }
+        } else {
+          // Return all seniority levels
+          const allLevels = await prisma.seniorityLevel.findMany({
+            include: { employees: true },
           })
+          return { success: true, data: allLevels }
         }
-
-        return { success: true, data: seniorityLevel }
       }
 
       case 'POST': {
         const body = await readBody<SeniorityLevelCreateBody>(event)
 
-        if (!body.name || !body.displayName) {
+        if (!body.name || !body.displayName || typeof body.seniority_coefficient !== 'number') {
           throw createError({
             statusCode: 400,
-            statusMessage: 'Missing or invalid body parameters',
+            statusMessage: 'Missing or invalid body parameters' + body.displayName + body.name + body.seniority_coefficient,
           })
         }
 
-        const createdSeniorityLevel = await prisma.seniorityLevel.create({
+        const created = await prisma.seniorityLevel.create({
           data: {
             name: body.name,
             display_name: body.displayName,
+            seniority_coefficient: body.seniority_coefficient,
           },
         })
 
-        return { success: true, data: createdSeniorityLevel }
+        return { success: true, data: created }
       }
 
       case 'PUT': {
@@ -75,22 +77,23 @@ export default defineEventHandler(async (event) => {
         const id = Number(params.id)
         const body = await readBody<SeniorityLevelUpdateBody>(event)
 
-        if (!body.name || !body.displayName) {
+        if (!body.name || !body.displayName || typeof body.seniority_coefficient !== 'number') {
           throw createError({
             statusCode: 400,
             statusMessage: 'Missing or invalid body parameters',
           })
         }
 
-        const updatedSeniorityLevel = await prisma.seniorityLevel.update({
+        const updated = await prisma.seniorityLevel.update({
           where: { id },
           data: {
             name: body.name,
             display_name: body.displayName,
+            seniority_coefficient: body.seniority_coefficient,
           },
         })
 
-        return { success: true, data: updatedSeniorityLevel }
+        return { success: true, data: updated }
       }
 
       case 'DELETE': {
@@ -116,9 +119,9 @@ export default defineEventHandler(async (event) => {
           statusMessage: 'Method Not Allowed',
         })
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('[SeniorityLevel Handler Error]', error)
-    return sendError(event, createError({
+    return sendError(event, error.statusCode ? error : createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
     }))

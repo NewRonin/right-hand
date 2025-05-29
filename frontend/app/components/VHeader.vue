@@ -1,7 +1,6 @@
 <template>
   <header>
     <nav>
-<!--      <NuxtImg class="logo" src="/sprites/logo.svg" />-->
       <div class="links">
         <div
           v-for="link in links"
@@ -59,6 +58,7 @@ const links: HeaderLink[] = [
   { name: "Projects", link: "/projects", enabled: true },
   { name: "Roles", link: "/roles", enabled: true },
   { name: "Employees", link: "/employees", enabled: true },
+  { name: "Seniority", link: "/seniority", enabled: true },
 ];
 
 const emit = defineEmits(['toFooter'])

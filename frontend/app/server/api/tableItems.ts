@@ -79,6 +79,7 @@ export default defineEventHandler(async (event) => {
               extra_coefficient: task.extra_coefficient,
               extra_coefficient_description: task.extra_coefficient_description,
               progress: task.progress,
+              employee: task.employee_id,
               priority: task.taskRoles?.[0]?.role?.display_name || 'Normal',
             }))
           )
@@ -166,7 +167,7 @@ export default defineEventHandler(async (event) => {
           end_date: item.end_date ? new Date(item.end_date) : null,
           extra_coefficient: item.extra_coefficient ?? null,
           extra_coefficient_description: item.extra_coefficient_description ?? null,
-          progress: item.progress ?? null
+          progress: item.progress ?? null,
         }))
 
         await prisma.task.createMany({
@@ -225,6 +226,7 @@ export default defineEventHandler(async (event) => {
                   extra_coefficient: task.extra_coefficient,
                   extra_coefficient_description: task.extra_coefficient_description,
                   progress: task.progress,
+                  employee: task.employee_id,
                   priority: task.taskRoles?.[0]?.role?.display_name || 'Normal'
                 }))
               }))

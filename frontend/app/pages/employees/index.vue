@@ -15,7 +15,6 @@
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employees"
             editMode="cell"
             filterDisplay="row"
-            @cell-edit-complete="onCellEditComplete"
           >
             <template #header>
               <div class="flex justify-content-between align-items-center">
@@ -46,12 +45,13 @@
             </Column>
 
             <Column field="role.display_name" header="Role" sortable style="width: 35%">
-              <template #body="{ data }">{{ data.role.display_name }}</template>
+              <template #body="{ data }">
+                {{ data.role?.display_name ?? '—' }}
+              </template>
               <template #editor="{ data, field }">
-                <InputText v-model="data.role.display_name" />
+                <InputText v-model="data.role.display_name" :disabled="!data.role" />
               </template>
             </Column>
-
             <Column field="seniorityLevel.name" header="Seniority Level" sortable style="width: 35%">
               <template #body="{ data }">{{ data.seniorityLevel.name }}</template>
               <template #editor="{ data, field }">
@@ -147,7 +147,6 @@ const employees = ref<Employee[]>([])
 const employeeDialog = ref(false)
 const deleteEmployeeDialog = ref(false)
 const employee = ref<Employee>({ name: '', roleId: 0, seniorityLevelId: 0, role: { display_name: '' }, seniorityLevel: { name: '' } })
-const selectedEmployee = ref<Employee | null>(null)
 const submitted = ref(false)
 const loading = ref(true)
 const filters = ref({
@@ -192,7 +191,7 @@ const fetchRoles = async () => {
 
 const fetchSeniorityLevels = async () => {
   try {
-    const response = await $fetch(store.getApi('/api/seniority-level'))
+    const response = await $fetch(store.getApi('/api/seniorityLevel'))
     seniorityLevels.value = response.data || []
   } catch (error) {
     toast.add({
@@ -218,41 +217,89 @@ const hideDialog = () => {
 const saveEmployee = async () => {
   submitted.value = true
 
-  if (employee.value.name.trim() && employee.value.roleId && employee.value.seniorityLevelId) {
-    loading.value = true
-    try {
-      const payload = {
-        name: employee.value.name,
-        seniorityLevelId: employee.value.seniorityLevelId,
-        roleId: employee.value.roleId,
+  if (!employee.value.name?.trim() || !employee.value.roleId || !employee.value.seniorityLevelId) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Validation Error',
+      detail: 'Please fill in all required fields.',
+      life: 3000,
+    })
+    return
+  }
+
+  loading.value = true
+
+  const payload = {
+    name: employee.value.name,
+    seniorityLevelId: employee.value.seniorityLevelId,
+    roleId: employee.value.roleId,
+  }
+
+  try {
+    let response
+    if (employee.value.id) {
+      await $fetch(store.getApi(`/api/employee?id=${employee.value.id}`), {
+        method: 'PUT',
+        body: payload,
+      })
+
+      const index = employees.value.findIndex(e => e.id === employee.value.id)
+      if (index !== -1) {
+        employees.value[index] = { ...employee.value }
       }
 
-      if (employee.value.id) {
-        await $fetch(store.getApi(`/api/employee?id=${employee.value.id}`), {
-          method: 'PUT',
-          body: payload,
-        })
-        const index = employees.value.findIndex(e => e.id === employee.value.id)
-        if (index !== -1) employees.value[index] = { ...employee.value }
-        toast.add({ severity: 'success', summary: 'Successful', detail: 'Employee Updated', life: 3000 })
-      } else {
-        const res = await $fetch(store.getApi(`/api/employee`), {
+      toast.add({
+        severity: 'success',
+        summary: 'Successful',
+        detail: 'Employee updated',
+        life: 3000,
+      })
+    } else {
+      response = await $fetch(store.getApi('/api/employee'), {
+        method: 'POST',
+        body: payload,
+      })
+
+      if (response?.data) {
+        const created = await $fetch(store.getApi('/api/employee'), {
           method: 'POST',
           body: payload,
         })
-        employees.value.push({ ...res.data })
-        toast.add({ severity: 'success', summary: 'Successful', detail: 'Employee Created', life: 3000 })
+
+        const fullEmployee = await $fetch(store.getApi(`/api/employee?id=${created.data.id}`))
+        employees.value.push(fullEmployee.data)
       }
 
-      employeeDialog.value = false
-      employee.value = { name: '', roleId: 0, seniorityLevelId: 0, role: { display_name: '' }, seniorityLevel: { name: '' } }
-    } catch (error) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save employee', life: 3000 })
-    } finally {
-      loading.value = false
+      toast.add({
+        severity: 'success',
+        summary: 'Successful',
+        detail: 'Employee created',
+        life: 3000,
+      })
     }
+
+    employeeDialog.value = false
+    employee.value = {
+      name: '',
+      roleId: 0,
+      seniorityLevelId: 0,
+      role: { display_name: '' },
+      seniorityLevel: { name: '' },
+    }
+    submitted.value = false
+  } catch (error) {
+    console.error('[SaveEmployee Error]', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to save employee',
+      life: 3000,
+    })
+  } finally {
+    loading.value = false
   }
 }
+
 
 const confirmDeleteEmployee = (selected: Employee) => {
   employee.value = { ...selected }
