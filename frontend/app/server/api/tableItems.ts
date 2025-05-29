@@ -10,19 +10,21 @@ export default defineEventHandler(async (event) => {
     id?: string
     name: string
     featureId: string
-    feature: string,
+    feature: string
     epic: string
     epicId: string
-    optimistic_estimation?: number
-    realistic_estimation?: number
-    pessimistic_estimation?: number
-    t_shirt_size?: string
-    total_estimation?: number
-    start_date?: string | Date
-    end_date?: string | Date
-    extra_coefficient?: number
-    extra_coefficient_description?: string
-    progress?: number,
+    optimistic_estimation?: number | null
+    realistic_estimation?: number | null
+    pessimistic_estimation?: number | null
+    t_shirt_size?: string | null
+    total_estimation?: number | null
+    start_date?: string | Date | null
+    end_date?: string | Date | null
+    extra_coefficient?: number | null
+    extra_coefficient_description?: string | null
+    progress?: number | null
+    employee?: number | null
+    priority?: string | null
   }
 
   try {
@@ -33,6 +35,7 @@ export default defineEventHandler(async (event) => {
           throw createError({ statusCode: 400, statusMessage: 'Invalid project ID' })
         }
 
+        // Получаем проект с вложенными данными
         const project = await prisma.project.findUnique({
           where: { id: projectId },
           include: {
@@ -48,26 +51,26 @@ export default defineEventHandler(async (event) => {
                           }
                         }
                       }
-                    },
-                  },
-                },
-              },
-            },
-          },
+                    }
+                  }
+                }
+              }
+            }
+          }
         })
 
         if (!project) {
           throw createError({ statusCode: 404, statusMessage: 'Project not found' })
         }
 
-        const flattened = project.epics.flatMap(epic =>
+        const tasks = project.epics.flatMap(epic =>
           epic.features.flatMap(feature =>
             feature.tasks.map(task => ({
-              id: `${task.id}`,
+              id: String(task.id),
               name: task.title,
-              featureId: `${feature.id}`,
+              featureId: String(feature.id),
               feature: feature.title,
-              epicId: `${epic.id}`,
+              epicId: String(epic.id),
               epic: epic.title,
               optimistic_estimation: task.optimistic_estimation,
               realistic_estimation: task.realistic_estimation,
@@ -85,21 +88,22 @@ export default defineEventHandler(async (event) => {
           )
         )
 
-        return { success: true, data: flattened }
+        return {
+          success: true,
+          data: tasks,
+        }
       }
 
-      case 'POST':
       case 'PUT': {
-        const body = await readBody(event)
-
         const projectId = Number(params.projectId)
         if (isNaN(projectId)) {
-          throw createError({ statusCode: 400, statusMessage: 'Missing projectId' })
+          throw createError({ statusCode: 400, statusMessage: 'Missing or invalid projectId' })
         }
 
-        const { items = [] } = body as { projectId: number; items: TaskItem[] }
+        const body = await readBody(event) as { items: TaskItem[] }
+        const items = body.items || []
 
-        // Проверяем существование проекта
+        // Проверяем наличие проекта
         const projectExists = await prisma.project.findUnique({
           where: { id: projectId }
         })
@@ -107,54 +111,66 @@ export default defineEventHandler(async (event) => {
           throw createError({ statusCode: 404, statusMessage: 'Project not found' })
         }
 
-        // Для PUT сначала удаляем существующие данные
-        if (method === 'PUT') {
-          await prisma.$transaction([
-            prisma.task.deleteMany({
-              where: { feature: { epic: { project_id: projectId } } },
-            }),
-            prisma.feature.deleteMany({
-              where: { epic: { project_id: projectId } },
-            }),
-            prisma.epic.deleteMany({
-              where: { project_id: projectId },
-            }),
-          ])
-        }
+        // Удаляем все эпики/фичи/таски проекта
+        await prisma.$transaction([
+          prisma.task.deleteMany({
+            where: {
+              feature: {
+                epic: {
+                  project_id: projectId
+                }
+              }
+            }
+          }),
+          prisma.feature.deleteMany({
+            where: {
+              epic: {
+                project_id: projectId
+              }
+            }
+          }),
+          prisma.epic.deleteMany({
+            where: {
+              project_id: projectId
+            }
+          }),
+        ])
 
-        // Создаем эпики
+        // Создаём эпики (уникальные по epicId)
         const epicIdMap = new Map<string, number>()
-        const uniqueEpics = [...new Set(items.map(item => item.epicId))]
-        
-        for (const epicId of uniqueEpics) {
-          const item = items.find(i => i.epicId === epicId)
+        const uniqueEpicIds = [...new Set(items.map(i => i.epicId))]
+        for (const epicId of uniqueEpicIds) {
+          const epicItem = items.find(i => i.epicId === epicId)
+          if (!epicItem) continue
+
           const epic = await prisma.epic.create({
             data: {
-              title: item?.epic || '',
+              title: epicItem.epic,
               total_estimation: 0,
-              project_id: projectId,
-            },
+              project_id: projectId
+            }
           })
           epicIdMap.set(epicId, epic.id)
         }
 
-        // Создаем фичи
+        // Создаём фичи (уникальные по featureId)
         const featureIdMap = new Map<string, number>()
-        const uniqueFeatures = [...new Set(items.map(item => item.featureId))]
-        
-        for (const featureId of uniqueFeatures) {
-          const item = items.find(i => i.featureId === featureId)
+        const uniqueFeatureIds = [...new Set(items.map(i => i.featureId))]
+        for (const featureId of uniqueFeatureIds) {
+          const featureItem = items.find(i => i.featureId === featureId)
+          if (!featureItem) continue
+
           const feature = await prisma.feature.create({
             data: {
-              title: item?.feature || '',
+              title: featureItem.feature,
               total_estimation: 0,
-              epic_id: epicIdMap.get(item!.epicId)!,
-            },
+              epic_id: epicIdMap.get(featureItem.epicId)!
+            }
           })
           featureIdMap.set(featureId, feature.id)
         }
 
-        // Создаем задачи
+        // Создаём задачи
         const tasksData = items.map(item => ({
           title: item.name,
           feature_id: featureIdMap.get(item.featureId)!,
@@ -168,78 +184,25 @@ export default defineEventHandler(async (event) => {
           extra_coefficient: item.extra_coefficient ?? null,
           extra_coefficient_description: item.extra_coefficient_description ?? null,
           progress: item.progress ?? null,
+          employee_id: item.employee ?? null,
         }))
 
         await prisma.task.createMany({
-          data: tasksData,
+          data: tasksData
         })
 
-        // Получаем обновленный проект с вложенными данными
-        const updatedProject = await prisma.project.findUnique({
-          where: { id: projectId },
-          include: {
-            epics: {
-              include: {
-                features: {
-                  include: {
-                    tasks: {
-                      include: {
-                        taskRoles: {
-                          include: {
-                            role: true
-                          }
-                        }
-                      }
-                    },
-                  },
-                },
-              },
-            },
-          },
-        })
-
-        return { 
-          success: true, 
-          data: {
-            id: updatedProject?.id,
-            evaluationModelId: updatedProject?.evaluationModelId,
-            title: updatedProject?.title,
-            description: updatedProject?.description,
-            epics: updatedProject?.epics.map(epic => ({
-              id: epic.id,
-              title: epic.title,
-              total_estimation: epic.total_estimation,
-              features: epic.features.map(feature => ({
-                id: feature.id,
-                title: feature.title,
-                total_estimation: feature.total_estimation,
-                tasks: feature.tasks.map(task => ({
-                  id: task.id,
-                  title: task.title,
-                  optimistic_estimation: task.optimistic_estimation,
-                  realistic_estimation: task.realistic_estimation,
-                  pessimistic_estimation: task.pessimistic_estimation,
-                  t_shirt_size: task.t_shirt_size,
-                  total_estimation: task.total_estimation,
-                  start_date: task.start_date,
-                  end_date: task.end_date,
-                  extra_coefficient: task.extra_coefficient,
-                  extra_coefficient_description: task.extra_coefficient_description,
-                  progress: task.progress,
-                  employee: task.employee_id,
-                  priority: task.taskRoles?.[0]?.role?.display_name || 'Normal'
-                }))
-              }))
-            }))
-          }
+        // Возвращаем успех
+        return {
+          success: true,
+          message: 'Project tasks updated successfully'
         }
       }
 
       default:
         throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
     }
-  } catch (err) {
-    console.error('[tableItems API Error]', err)
+  } catch (error) {
+    console.error('[tableItems API Error]', error)
     return sendError(event, createError({ statusCode: 500, statusMessage: 'Internal Server Error' }))
   }
 })

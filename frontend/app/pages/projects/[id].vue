@@ -8,7 +8,7 @@
             <div class="model-badge">{{ selectedEvaluationModel || 'Unknown evaluation model' }}</div>
           </div>
 
-          <CTableWBS :columns="columns" v-model="tableData" />
+          <CTableWBS :columns="columns" v-model="tableData" :employees="employees" />
 
           <div v-if="totalEstimate" class="estimate-info">
             <div class="total-estimate">
@@ -29,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-
 const route = useRoute()
 
 const columns : Ref<TableColumn[]> = ref([
@@ -37,6 +36,7 @@ const columns : Ref<TableColumn[]> = ref([
   { key: "feature", field: "feature", header: "Feature" },
   { key: "name", field: "name", header: "Task" },
   { key: "priority", field: "priority", header: "Priority" },
+  { key: "employee", field: "employee", header: "Employee" },  // <- добавлено
   { key: "total_estimation", field: "total_estimation", header: "Estimate"},
 ]);
 
@@ -45,6 +45,7 @@ const selectedEvaluationModel = ref();
 const projectName = ref('')
 const isSaving = ref(false);
 const store = useMainStore();
+const employees = ref<{id: number, display_name: string}[]>([]);
 
 const projectId = computed(() => route.params.id);
 const projectLoaded = ref(false);
@@ -53,39 +54,58 @@ const totalEstimate = computed(() => {
   let result = 0
 
   for(let i of tableData.value){
-    result+=i.total_estimation
+    result += i.total_estimation || 0
   }
 
   return result
 })
 
-onMounted(async () => {
-  if (projectId.value) {
-    try {
-      const response = await $fetch(store.getApi(`/api/project?id=${projectId.value}`));
-      if (response.success) {
-        const project = response.data;
-        projectName.value = project.title;
-        selectedEvaluationModel.value = project.evaluationModel.title;
-        projectLoaded.value = true;
-      }
-
-      const flatItems = await $fetch(store.getApi('/api/tableItems'), {
-        query: { projectId : projectId.value }, 
-        method: "GET",
-      });
-      
-      if (flatItems.success) {
-
-        tableData.value = flatItems.data || []
-      }
-
-
-    } catch (error) {
-      console.error("Failed to load project:", error);
+const loadEmployees = async () => {
+  try {
+    const res = await $fetch(store.getApi('/api/employee'), { method: 'GET' });
+    if (res.success) {
+      employees.value = res.data || [];
     }
+  } catch (e) {
+    console.error('Failed to load employees', e);
+  }
+}
+
+const employeeMap = computed(() => {
+  const map = new Map<number, string>();
+  employees.value.forEach(emp => map.set(emp.id, emp.display_name));
+  return map;
+});
+
+
+onMounted(async () => {
+  if (!projectId.value) return;
+
+  try {
+    const response = await $fetch(store.getApi(`/api/project?id=${projectId.value}`));
+    if (response.success) {
+      const project = response.data;
+      projectName.value = project.title;
+      selectedEvaluationModel.value = project.evaluationModel.title;
+      projectLoaded.value = true;
+    }
+
+    const flatItemsResponse = await $fetch(store.getApi('/api/tableItems'), {
+      query: { projectId: projectId.value },
+      method: "GET",
+    });
+
+    if (flatItemsResponse.success) {
+      tableData.value = flatItemsResponse.data || [];
+    }
+
+    await loadEmployees();
+
+  } catch (error) {
+    console.error("Failed to load project or data:", error);
   }
 });
+
 
 const updateProject = async () => {
   try {
@@ -112,6 +132,7 @@ watch (selectedEvaluationModel, () => {
       { key: "feature", field: "feature", header: "Feature" },
       { key: "name", field: "name", header: "Task" },
       { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" }, 
       { key: "optimistic_estimation", field: "optimistic_estimation", header: "Optimistic"},
       { key: "realistic_estimation", field: "realistic_estimation", header: "Realistic"},
       { key: "pessimistic_estimation", field: "pessimistic_estimation", header: "Pessimistic"},
@@ -126,6 +147,7 @@ watch (selectedEvaluationModel, () => {
       { key: "feature", field: "feature", header: "Feature" },
       { key: "name", field: "name", header: "Task" },
       { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" },  
       { key: "t_shirt_size", field: "t_shirt_size", header: "T-Shirt"},
     ]
   }
@@ -135,12 +157,14 @@ watch (selectedEvaluationModel, () => {
       { key: "feature", field: "feature", header: "Feature" },
       { key: "name", field: "name", header: "Task" },
       { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" },  
       { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
       { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
       { key: "total_estimation", field: "total_estimation", header: "Estimate"},
     ]
   }
 })
+
 </script>
 
 <style scoped lang="scss">

@@ -51,7 +51,7 @@
           v-model="filters[col.field].value"
           @change="filterCallback()"
           :options="filterOptions[col.field]"
-          optionLabel="label"
+          optionLabel="displayText"
           optionValue="value"
           placeholder="Select One"
           style="min-width: 12rem"
@@ -59,9 +59,11 @@
         >
           <template #option="slotProps">
             <Tag
-              :value="slotProps.option.label"
+              v-if="col.field === 'priority'"
+              :value="slotProps.option.displayText"
               :severity="getSeverity(slotProps.option.value)"
             />
+            <span v-else-if="col.field === 'employee'">{{ getEmployeeName(slotProps.option.value ) }}</span>
           </template>
         </Select>
       </template>
@@ -71,7 +73,7 @@
           v-if="field === 'priority'"
           v-model="data[field]"
           :options="options"
-          optionLabel="label"
+          optionLabel="displayText"
           optionValue="value"
           placeholder="Select Priority"
           class="w-full"
@@ -80,7 +82,7 @@
         >
           <template #option="slotProps">
             <Tag
-              :value="slotProps.option.label"
+              :value="slotProps.option.displayText"
               :severity="getSeverity(slotProps.option.value)"
             />
           </template>
@@ -92,6 +94,24 @@
           :disabled="col.disabled"
         />
         <InputText v-else v-model="data[field]" autofocus fluid />
+      </template>
+
+      <template v-if="col.field === 'employee'" #body="{ data }">
+        {{ getEmployeeName(data.employee) }}
+      </template>
+
+      <template v-if="col.field === 'employee'" #editor="{ data, field, index }">
+        <Select
+          v-model="data[field]"
+          :options="props.employees"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Select Employee"
+          class="w-full"
+          autofocus
+          :showClear="true"
+          @change="value => onEmployeeChange(value, data, field, index)">
+          </Select>
       </template>
     </Column>
   </DataTable>
@@ -114,12 +134,20 @@ interface TableItem {
   featureId: string;
   epic: string;
   epicId: string;
+  employee?: string; 
+  employeeName?: string; 
   type: 'epic' | 'feature' | 'task' | string
+}
+
+interface Employee {
+  id: number;
+  name: string;
 }
 
 const props = defineProps<{
   columns: TableColumn[];
   modelValue: TableItem[];
+  employees: Employee[];
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -133,18 +161,18 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
-const filterOptions = ref<{ [key: string]: { label: string; value: any }[] }>(
+const filterOptions = ref<{ [key: string]: { displayText: string; value: any }[] }>(
   {}
 );
 
 const options = ref([
-  { label: "High", value: "High" },
-  { label: "Normal", value: "Normal" },
-  { label: "Low", value: "Low" },
+  { displayText: "High", value: "High" },
+  { displayText: "Normal", value: "Normal" },
+  { displayText: "Low", value: "Low" },
 ]);
 
 const generateFilterOptions = () => {
-  const newFilterOptions: { [key: string]: { label: string; value: any }[] } =
+  const newFilterOptions: { [key: string]: { displayText: string; value: any }[] } =
     {};
 
   props.columns.forEach((col) => {
@@ -160,7 +188,7 @@ const generateFilterOptions = () => {
         props.modelValue.map((item) => item[col.field])
       );
       newFilterOptions[col.field] = Array.from(uniqueValues).map((value) => ({
-        label: value,
+        displayText: value,
         value,
       }));
     }
@@ -231,11 +259,9 @@ function onCellEditComplete(event: {
   field: string,
   index: number
 }) {
-  // Создаем копию данных
   const updatedData = [...props.modelValue];
   const target = updatedData[event.index];
 
-  // Обработка изменений epic/feature с групповым обновлением
   if (event.field === 'epic' || event.field === 'feature') {
     const idField = `${event.field}Id` as 'epicId' | 'featureId';
     const idValue = target[idField];
@@ -248,12 +274,10 @@ function onCellEditComplete(event: {
       });
     }
   }
-  // Обработка всех остальных полей
   else {
     target[event.field] = event.newValue;
   }
 
-  // Обработка изменений оценок
   if (['optimistic_estimation', 'realistic_estimation', 'pessimistic_estimation', 'extra_coefficient'].includes(event.field)) {
     target[event.field] = Number(event.newValue);
 
@@ -261,7 +285,6 @@ function onCellEditComplete(event: {
     const real = Number(target.realistic_estimation) || 0;
     const pess = Number(target.pessimistic_estimation) || 0;
 
-    // Расчет PERT-оценки с округлением до 2 знаков
     target.total_estimation = parseFloat(((opt + 4 * real + pess) / 6).toFixed(2));
   }
 
@@ -365,6 +388,21 @@ function deleteRow() {
   }
 
   emit('update:modelValue', result);
+}
+
+const employeeMap = computed(() => {
+  const map = new Map<number, string>();
+  props.employees.forEach(emp => map.set(emp.id, emp.display_name));
+  return map;
+});
+
+const getEmployeeName = (employeeId: number) => {
+  const employee = props.employees.find(e => e.id === employeeId);
+  return employee ? employee.name : '—';
+};
+
+function onEmployeeChange(value: number, data: TableItem, field: string, index: number) {
+  emit('update:modelValue', data);
 }
 
 watch(() => props.modelValue, (newValue, oldValue) => {
