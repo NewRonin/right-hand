@@ -23,98 +23,110 @@
       </div>
     </template>
 
-    <Column
-      v-for="col of columns"
-      :key="col.field"
-      :field="col.field"
-      :header="col.header"
-      filter
-      showFilterMenu
-      :filterMatchMode="FilterMatchMode.EQUALS"
-    >
-      <template v-if="col.field === 'priority'" #body="{ data }">
-        <Tag :value="data.priority" :severity="getSeverity(data.priority)" />
-      </template>
-
-      <template
-        v-if="
-          col.field !== 'optimistic_estimation' &&
-          col.field !== 'realistic_estimation' &&
-          col.field !== 'pessimistic_estimation' &&
-          col.field !== 'extra_coefficient' &&
-          col.field !== 'extra_coefficient_description' &&
-          col.field !== 'total_estimate'
-        "
-        #filter="{ filterModel, filterCallback }"
+    <template v-for="col, colIndex in columns" :key="col.field">
+      <Column
+        :field="col.field"
+        :header="col.header"
+        filter
+        showFilterMenu
+        :filterMatchMode="FilterMatchMode.EQUALS"
       >
-        <Select
-          v-model="filters[col.field].value"
-          @change="filterCallback()"
-          :options="filterOptions[col.field]"
-          optionLabel="displayText"
-          optionValue="value"
-          placeholder="Select One"
-          style="min-width: 12rem"
-          :showClear="true"
+        <template v-if="col.field === 'priority'" #body="{ data }">
+          <Tag :value="data.priority" :severity="getSeverity(data.priority)" />
+        </template>
+
+        <template
+          v-if="col.field !== 'optimistic_estimation' &&
+                  col.field !== 'realistic_estimation' &&
+                  col.field !== 'pessimistic_estimation' &&
+                  col.field !== 'extra_coefficient' &&
+                  col.field !== 'extra_coefficient_description' &&
+                  col.field !== 'total_estimate'"
+          #filter="{ filterModel, filterCallback }"
         >
-          <template #option="slotProps">
-            <Tag
-              v-if="col.field === 'priority'"
-              :value="slotProps.option.displayText"
-              :severity="getSeverity(slotProps.option.value)"
-            />
-            <span v-else-if="col.field === 'employee'">{{ getEmployeeName(slotProps.option.value ) }}</span>
-          </template>
-        </Select>
-      </template>
-
-      <template #editor="{ data, field, index }">
-        <Select
-          v-if="field === 'priority'"
-          v-model="data[field]"
-          :options="options"
-          optionLabel="displayText"
-          optionValue="value"
-          placeholder="Select Priority"
-          class="w-full"
-          autofocus
-          :showClear="false"
-        >
-          <template #option="slotProps">
-            <Tag
-              :value="slotProps.option.displayText"
-              :severity="getSeverity(slotProps.option.value)"
-            />
-          </template>
-        </Select>
-        <InputNumber
-          v-else-if="field === 'total_estimation' || field === 'optimistic_estimation' || field === 'realistic_estimation' || field === 'pessimistic_estimation' ||  field === 'extra_coefficient'"
-          v-model="data[field]"
-          :autofocus="col"
-          :disabled="col.disabled"
-        />
-        <InputText v-else v-model="data[field]" autofocus fluid />
-      </template>
-
-      <template v-if="col.field === 'employee'" #body="{ data }">
-        {{ getEmployeeName(data.employee) }}
-      </template>
-
-      <template v-if="col.field === 'employee'" #editor="{ data, field, index }">
-        <Select
-          v-model="data[field]"
-          :options="props.employees"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="Select Employee"
-          class="w-full"
-          autofocus
-          :showClear="true"
-          @change="value => onEmployeeChange(value, data, field, index)">
+          <Select
+            v-model="filters[col.field].value"
+            @change="filterCallback()"
+            :options="filterOptions[col.field]"
+            optionLabel="displayText"
+            optionValue="value"
+            placeholder="Select One"
+            style="min-width: 12rem"
+            :showClear="true"
+          >
+            <template #option="slotProps">
+              <Tag
+                v-if="col.field === 'priority'"
+                :value="slotProps.option.displayText"
+                :severity="getSeverity(slotProps.option.value)"
+              />
+              <span
+                v-else-if="col.field === 'employee'"
+              >{{ getEmployeeName(slotProps.option.value) }}</span>
+            </template>
           </Select>
-      </template>
-    </Column>
+        </template>
+
+        <template #editor="{ data, field, index }">
+          <Select
+            v-if="field === 'priority'"
+            v-model="data[field]"
+            :options="options"
+            optionLabel="displayText"
+            optionValue="value"
+            placeholder="Select Priority"
+            class="w-full"
+            autofocus
+            :showClear="false"
+          >
+            <template #option="slotProps">
+              <Tag
+                :value="slotProps.option.displayText"
+                :severity="getSeverity(slotProps.option.value)"
+              />
+            </template>
+          </Select>
+          <InputNumber
+            v-else-if="field === 'total_estimation' || field === 'optimistic_estimation' || field === 'realistic_estimation' || field === 'pessimistic_estimation' ||  field === 'extra_coefficient'"
+            v-model="data[field]"
+            :autofocus="col"
+            :disabled="col.disabled"
+          />
+          <InputText v-else v-model="data[field]" autofocus fluid />
+        </template>
+
+        <template v-if="col.field === 'employee'" #body="{ data }">
+          {{ getEmployeeName(data.employee) }}
+        </template>
+
+        <template v-if="col.field === 'employee'" #editor="{ data, field, index }">
+          <Select
+            v-model="data[field]"
+            :options="props.employees"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select Employee"
+            class="w-full"
+            autofocus
+            :showClear="true"
+            @change="value => onEmployeeChange(value, data, field, index)"
+          />
+        </template>
+      </Column>
+
+      <Column
+        v-if="col.field === 'extra_coefficient_description'"
+        field="seniority_coefficient"
+        header="Seniority Coefficient"
+      >
+        <template #body="{ data }">
+          {{ getSeniorityCoefficient(data.employee) }}
+        </template>
+      </Column>
+    </template>
   </DataTable>
+
+  <ContextMenu :model="contextMenuItems" ref="cm" />
 
   <ContextMenu :model="contextMenuItems" ref="cm" />
 </template>
@@ -136,12 +148,14 @@ interface TableItem {
   epicId: string;
   employee?: string; 
   employeeName?: string; 
+  seniority_coefficient?: number;
   type: 'epic' | 'feature' | 'task' | string
 }
 
 interface Employee {
   id: number;
   name: string;
+  seniority_coefficient?: number;
 }
 
 const props = defineProps<{
@@ -286,12 +300,24 @@ function onCellEditComplete(event: {
     const pess = Number(target.pessimistic_estimation) || 0;
 
     target.total_estimation = parseFloat(((opt + 4 * real + pess) / 6).toFixed(2));
+
+    if (target.extra_coefficient) {
+      target.total_estimation = target.total_estimation * target.extra_coefficient
+    }
+    
+    target.total_estimation *= getSeniorityCoefficient(target.employee)
+
   }
 
-  if (target.extra_coefficient) {
-    target.total_estimation = target.total_estimation * target.extra_coefficient
-  }
 
+  else if (event.field === 'total_estimation' && event.value !==  event.newValue) {
+    if (target.extra_coefficient) {
+      target.total_estimation = target.total_estimation * target.extra_coefficient
+    }
+    
+    target.total_estimation *= getSeniorityCoefficient(target.employee)
+  }
+  
   emit('update:modelValue', updatedData);
 }
 
@@ -401,8 +427,27 @@ const getEmployeeName = (employeeId: number) => {
   return employee ? employee.name : '—';
 };
 
-function onEmployeeChange(value: number, data: TableItem, field: string, index: number) {
-  emit('update:modelValue', data);
+function onEmployeeChange(event: { value: number }, data: TableItem, field: string, index: number) {
+  const selectedEmployeeId = event.value;
+
+  const updatedData = [...props.modelValue];
+  const target = updatedData[index];
+  target[field] = selectedEmployeeId;
+
+  console.log(selectedEmployeeId)
+
+  const employee = props.employees.find(e => e.id === selectedEmployeeId);
+  target.seniority_coefficient = employee?.seniorityLevel.seniority_coefficient ?? 1;
+
+  console.log(updatedData, updatedData[index], employee)
+
+  emit('update:modelValue', updatedData);
+}
+
+
+function getSeniorityCoefficient(employeeId?: number): number {
+  const employee = props.employees.find(e => e.id === employeeId);
+  return employee?.seniorityLevel.seniority_coefficient ?? 1;
 }
 
 watch(() => props.modelValue, (newValue, oldValue) => {

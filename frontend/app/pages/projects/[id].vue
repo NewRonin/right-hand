@@ -37,7 +37,7 @@ const columns : Ref<TableColumn[]> = ref([
   { key: "name", field: "name", header: "Task" },
   { key: "priority", field: "priority", header: "Priority" },
   { key: "employee", field: "employee", header: "Employee" },  // <- добавлено
-  { key: "total_estimation", field: "total_estimation", header: "Estimate"},
+  { key: "total_estimation", field: "total_estimation", header: "Final Estimate"},
 ]);
 
 const tableData = ref([]);
@@ -45,7 +45,7 @@ const selectedEvaluationModel = ref();
 const projectName = ref('')
 const isSaving = ref(false);
 const store = useMainStore();
-const employees = ref<{id: number, display_name: string}[]>([]);
+const employees = ref<{id: number, name: string}[]>([]);
 
 const projectId = computed(() => route.params.id);
 const projectLoaded = ref(false);
@@ -57,7 +57,7 @@ const totalEstimate = computed(() => {
     result += i.total_estimation || 0
   }
 
-  return result
+  return result.toFixed(2)
 })
 
 const loadEmployees = async () => {
@@ -138,7 +138,7 @@ watch (selectedEvaluationModel, () => {
       { key: "pessimistic_estimation", field: "pessimistic_estimation", header: "Pessimistic"},
       { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
       { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
-      { key: "total_estimation", field: "total_estimation", header: "Estimate", disabled: true},
+      { key: "total_estimation", field: "total_estimation", header: "Final Estimate", disabled: true},
     ]
   }
   else if (selectedEvaluationModel.value === "T-Shirt Size") {
@@ -160,7 +160,7 @@ watch (selectedEvaluationModel, () => {
       { key: "employee", field: "employee", header: "Employee" },  
       { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
       { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
-      { key: "total_estimation", field: "total_estimation", header: "Estimate"},
+      { key: "total_estimation", field: "total_estimation", header: "Final Estimate"},
     ]
   }
 })
