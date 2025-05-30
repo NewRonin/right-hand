@@ -23,6 +23,15 @@
             </VButton>
           </div>
         </section>
+
+        <section class="gantt-section">
+          <div width='100%' class="p-8">
+            <h1 class="text-2xl font-bold mb-4">Диаграмма Ганта: </h1>
+            <ClientOnly>
+              <GanttChart v-model="tableData" />
+            </ClientOnly>
+          </div>
+        </section>
       </main>
     </div>
   </Transition>
@@ -183,6 +192,7 @@ watch (selectedEvaluationModel, () => {
     max-width: 1200px;
     display: flex;
     flex-flow: column nowrap;
+    gap: 3rem;
   }
 }
 
