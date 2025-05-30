@@ -26,7 +26,7 @@
 
         <section class="gantt-section">
           <div width='100%' class="p-8">
-            <h1 class="text-2xl font-bold mb-4">Диаграмма Ганта: </h1>
+            <h1 class="text-2xl font-bold mb-4">Gantt Chart: </h1>
             <ClientOnly>
               <GanttChart v-model="tableData" />
             </ClientOnly>

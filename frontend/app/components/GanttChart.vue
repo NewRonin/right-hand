@@ -3,7 +3,7 @@
     <div
       ref="ganttContainer"
       class="overflow-x-auto"
-      style="min-width: 1000px"
+      style="min-width: 1000px;"
     />
   </div>
 </template>
@@ -24,15 +24,20 @@ const emit = defineEmits(["update:modelValue"]);
 const isInternalChange = ref(false);
 
 function transformTasks(data) {
-  return data.map((task) => ({
-    id: task.id,
-    name: task.name,
-    start: stripTime(formatDateLocal(task.start_date)) ?? stripTime(new Date()),
-    end: stripTime(formatDateLocal(task.end_date)) ?? stripTime(addOneDay()),
-    progress: task.progress ?? 0,
-  }));
+  return data.map((task) => {
+    const start = task.start_date ? new Date(task.start_date) : new Date();
+    const end = task.end_date ? new Date(task.end_date) : addOneDay();
 
+    return {
+      id: task.id,
+      name: task.name,
+      start: stripTime(start),
+      end: stripTime(end),
+      progress: task.progress ?? 0,
+    };
+  });
 }
+
 
 function formatDateLocal(date) {
   const d = new Date(stripTime(date));
@@ -50,9 +55,14 @@ function addOneDay() {
 
 const stripTime = (date) => {
   const d = new Date(date);
+  if (isNaN(d)) {
+    console.warn("Invalid date in stripTime:", date);
+    return new Date(); 
+  }
   d.setHours(0, 0, 0, 0);
   return d;
 };
+
 
 function renderGantt() {
   const tasks = transformTasks(props.modelValue);
@@ -114,3 +124,7 @@ onMounted(() => {
   renderGantt();
 });
 </script>
+
+<style scoped>
+
+</style>

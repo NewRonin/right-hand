@@ -5,46 +5,51 @@
         <section v-if="step === 2" class="selection-section">
           <div class="selection-container">
             <InputRadio
-                v-model="selectedEvaluationModel"
-                :label="'Evaluation model'"
-                :options="evaluationModels?.data?.map(model => ({
+              v-model="selectedEvaluationModel"
+              :label="'Evaluation model'"
+              :options="evaluationModels?.data?.map(model => ({
                 label: model.title,
                 value: model.id
               }))"
-                required
+              required
             />
           </div>
           <div class="buttons-container">
             <VButton class="next-button" @click="goToNextStep" :disabled="!selectedEvaluationModel">Next</VButton>
           </div>
         </section>
+        
         <section v-else-if="step === 1" class="selection-section">
           <div class="selection-container">
             <InputMain
-                v-model="projectName"
-                :label="`Project title`"
-                required
+              v-model="projectName"
+              :label="`Project title`"
+              required
             />
           </div>
           <div class="buttons-container">
             <VButton class="next-button" @click="goToNextStep" :disabled="!projectName">Next</VButton>
           </div>
         </section>
+        
         <section v-else class="table-section">
           <div class="header-info">
-            <h2> Project name: {{projectName || 'Unknown title' }}</h2>
-            <p> Model: {{ selectedEvaluationModel ? evaluationModels?.data?.find(model => model.id === selectedEvaluationModel)?.title : 'Unknown evaluation model' }}</p>
+            <h1 class="project-title">{{projectName || 'Unknown title' }}</h1>
+            <div class="model-badge">{{ selectedEvaluationModelTitle || 'Unknown evaluation model' }}</div>
           </div>
 
-          <CTableWBS :columns="columns" v-model="tableData" />
+          <CTableWBS :columns="columns" v-model="tableData" :employees="employees" />
 
-          <div class="estimate-info">
-            <h1>{{ `Total estimate: ${totalEstimate}` }}</h1>
+          <div v-if="totalEstimate" class="estimate-info">
+            <div class="total-estimate">
+              <span class="label">Total estimate:</span>
+              <span class="value">{{ totalEstimate }}</span>
+            </div>
           </div>
 
           <div class="buttons-container">
             <VButton class="save-button" @click="saveProject" :disabled="isSaving">
-              {{ isSaving ? "Saving..." : "Save" }}
+              {{ isSaving ? "Saving..." : "Save Project" }}
             </VButton>
           </div>
         </section>
@@ -54,63 +59,49 @@
 </template>
 
 <script setup lang="ts">
-const step = ref(1);  
+const step = ref(1);
 const route = useRoute()
+const router = useRouter()
 
-const columns = [
+const columns: Ref<TableColumn[]> = ref([
   { key: "epic", field: "epic", header: "Epic" },
   { key: "feature", field: "feature", header: "Feature" },
   { key: "name", field: "name", header: "Task" },
   { key: "priority", field: "priority", header: "Priority" },
-  { key: "total_estimation", field: "total_estimation", header: "Estimate"},
-];
+  { key: "employee", field: "employee", header: "Employee" },
+  { key: "total_estimation", field: "total_estimation", header: "Final Estimate"},
+]);
 
-const tableData = ref([
-    {
-      "id": "15",
-      "name": "Task 2",
-      "featureId": "9",
-      "feature": "Feature 1",
-      "epicId": "8",
-      "epic": "Epic 2",
-      "optimistic_estimation": null,
-      "realistic_estimation": null,
-      "pessimistic_estimation": null,
-      "t_shirt_size": null,
-      "total_estimation": null,
-      "priority": "Normal"
-    },
-    {
-      "id": "16",
-      "name": "Task 4",
-      "featureId": "9",
-      "feature": "Feature 1",
-      "epicId": "8",
-      "epic": "Epic 2",
-      "optimistic_estimation": null,
-      "realistic_estimation": null,
-      "pessimistic_estimation": null,
-      "t_shirt_size": null,
-      "total_estimation": null,
-      "priority": "Normal"
-    }
-  ]);
-
+const tableData = ref([]);
 const selectedEvaluationModel = ref();
+const selectedEvaluationModelTitle = computed(() => {
+  return evaluationModels?.data?.find(model => model.id === selectedEvaluationModel.value)?.title;
+});
 const projectName = ref('')
 const isSaving = ref(false);
 const store = useMainStore();
-const router = useRouter()
+const employees = ref<{id: number, name: string}[]>([]);
 
 const totalEstimate = computed(() => {
   let result = 0
 
   for(let i of tableData.value){
-    result+=i.total_estimation
+    result += i.total_estimation || 0
   }
 
-  return result
+  return result.toFixed(2)
 })
+
+const loadEmployees = async () => {
+  try {
+    const res = await $fetch(store.getApi('/api/employee'), { method: 'GET' });
+    if (res.success) {
+      employees.value = res.data || [];
+    }
+  } catch (e) {
+    console.error('Failed to load employees', e);
+  }
+}
 
 const evaluationModels = await $fetch('/api/evaluationModel', {
   method: "GET",
@@ -126,7 +117,7 @@ const saveProject = async () => {
   isSaving.value = true;
   
   try {
-    // Сначала создаем проект
+    // First create project
     const projectResponse = await $fetch(store.getApi('/api/project'), {
       method: "POST",
       body: {
@@ -137,10 +128,10 @@ const saveProject = async () => {
     });
 
     if (projectResponse.success) {
-      // Затем сохраняем табличные данные
+      // Then save table data
       const tableResponse = await $fetch(store.getApi('/api/tableItems'), {
         method: "POST",
-        query: { projectId : projectResponse.data.id }, 
+        query: { projectId: projectResponse.data.id }, 
         body: {
           items: tableData.value,
         },
@@ -160,37 +151,74 @@ const saveProject = async () => {
     isSaving.value = false;
   }
 };
+
+watch(selectedEvaluationModel, () => {
+  if (!selectedEvaluationModel.value) return;
+
+  const model = evaluationModels?.data?.find(m => m.id === selectedEvaluationModel.value);
+  if (!model) return;
+
+  if (model.title === "PERT") {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" }, 
+      { key: "optimistic_estimation", field: "optimistic_estimation", header: "Optimistic"},
+      { key: "realistic_estimation", field: "realistic_estimation", header: "Realistic"},
+      { key: "pessimistic_estimation", field: "pessimistic_estimation", header: "Pessimistic"},
+      { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
+      { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
+      { key: "total_estimation", field: "total_estimation", header: "Final Estimate", disabled: true},
+    ]
+  }
+  else if (model.title === "T-Shirt Size") {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" },  
+      { key: "t_shirt_size", field: "t_shirt_size", header: "T-Shirt"},
+    ]
+  }
+  else {
+    columns.value = [
+      { key: "epic", field: "epic", header: "Epic" },
+      { key: "feature", field: "feature", header: "Feature" },
+      { key: "name", field: "name", header: "Task" },
+      { key: "priority", field: "priority", header: "Priority" },
+      { key: "employee", field: "employee", header: "Employee" },  
+      { key: "extra_coefficient", field: "extra_coefficient", header: "Extra Multiplier" },
+      { key: "extra_coefficient_description", field: "extra_coefficient_description", header: "Multiplier Description" },
+      { key: "total_estimation", field: "total_estimation", header: "Final Estimate"},
+    ]
+  }
+}, { immediate: true });
+
+onMounted(async () => {
+  await loadEmployees();
+});
 </script>
 
 <style scoped lang="scss">
 .page-container {
   position: relative;
-  height: 100vh;
-  width: 100vw;
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding-top: 5.6rem;
-
-  @media (max-width: 833px) {
-    padding-top: 0;
-    min-height: 100%;
-  }
+  background-color: #f5f7fa;
+  padding: 2rem 1rem;
 
   main {
-    width: 80%;
-    height: 100%;
+    width: 100%;
+    max-width: 1200px;
     display: flex;
     flex-flow: column nowrap;
-    justify-content: flex-start;
-    align-items: center;
-
-    @media (max-width: 833px) {
-      height: 100%;
-      justify-content: space-between;
-      padding-bottom: 2rem;
-    }
+    gap: 3rem;
   }
 }
 
@@ -198,53 +226,123 @@ const saveProject = async () => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .table-section {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-  .header-info{
-    margin-bottom: 4rem;
+  .header-info {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .project-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .model-badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      background: var(--main-transperent);
+      color: var(--main);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
   }
 }
 
-.selection-container {
-  width: 100%;
-  max-width: 500px;
-  text-align: center;
+.estimate-info {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eaeef2;
+
+  .total-estimate {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .label {
+      font-size: 1.1rem;
+      color: #7f8c8d;
+    }
+
+    .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--main);
+    }
+  }
 }
 
 .buttons-container {
-  width: 100%;
-  height: 4rem;
-  max-width: 500px;
+  margin-top: 3rem;
   display: flex;
-  justify-content: center;
-  margin-top: 4rem;
+  justify-content: flex-end;
+
+  .save-button, .next-button {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+    min-width: 180px;
+    
+    &:disabled {
+      background-color: #dcdcdc;
+      cursor: not-allowed;
+    }
+  }
 }
 
-.next-button {
-  width: 100%;
-  height: 100%;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-  justify-content: center;
+/* Transition animation */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
 
-  &:hover {
-    background-color: var(--accent);
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .selection-section,
+  .table-section {
+    padding: 1.5rem;
+
+    .header-info {
+      .project-title {
+        font-size: 1.5rem;
+      }
+    }
   }
 
-  &:disabled {
-    background-color: #dcdcdc;
-    cursor: not-allowed;
+  .estimate-info {
+    .total-estimate {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+
+  .buttons-container {
+    justify-content: center;
   }
 }
 </style>

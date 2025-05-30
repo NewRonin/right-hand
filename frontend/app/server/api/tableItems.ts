@@ -94,6 +94,83 @@ export default defineEventHandler(async (event) => {
         }
       }
 
+      
+      case 'POST': {
+        const projectId = Number(params.projectId)
+        if (isNaN(projectId)) {
+          throw createError({ statusCode: 400, statusMessage: 'Invalid project ID' })
+        }
+
+        const body = await readBody(event)
+        const items: TaskItem[] = body.items || []
+
+        const projectExists = await prisma.project.findUnique({
+          where: { id: projectId }
+        })
+        if (!projectExists) {
+          throw createError({ statusCode: 404, statusMessage: 'Project not found' })
+        }
+
+        const epicIdMap = new Map<string, number>()
+        const uniqueEpicIds = [...new Set(items.map(i => i.epicId))]
+        
+        for (const epicId of uniqueEpicIds) {
+          const epicItem = items.find(i => i.epicId === epicId)
+          if (!epicItem) continue
+
+          const epic = await prisma.epic.create({
+            data: {
+              title: epicItem.epic,
+              total_estimation: 0,
+              project_id: projectId
+            }
+          })
+          epicIdMap.set(epicId, epic.id)
+        }
+
+        const featureIdMap = new Map<string, number>()
+        const uniqueFeatureIds = [...new Set(items.map(i => i.featureId))]
+        
+        for (const featureId of uniqueFeatureIds) {
+          const featureItem = items.find(i => i.featureId === featureId)
+          if (!featureItem) continue
+
+          const feature = await prisma.feature.create({
+            data: {
+              title: featureItem.feature,
+              total_estimation: 0,
+              epic_id: epicIdMap.get(featureItem.epicId)!
+            }
+          })
+          featureIdMap.set(featureId, feature.id)
+        }
+
+        const tasksData = items.map(item => ({
+          title: item.name,
+          feature_id: featureIdMap.get(item.featureId)!,
+          optimistic_estimation: item.optimistic_estimation ?? null,
+          realistic_estimation: item.realistic_estimation ?? null,
+          pessimistic_estimation: item.pessimistic_estimation ?? null,
+          t_shirt_size: item.t_shirt_size ?? null,
+          total_estimation: item.total_estimation ?? null,
+          start_date: item.start_date ? new Date(item.start_date) : null,
+          end_date: item.end_date ? new Date(item.end_date) : null,
+          extra_coefficient: item.extra_coefficient ?? null,
+          extra_coefficient_description: item.extra_coefficient_description ?? null,
+          progress: item.progress ?? null,
+          employee_id: item.employee ?? null,
+        }))
+
+        await prisma.task.createMany({
+          data: tasksData
+        })
+
+        return {
+          success: true,
+          message: 'Project tasks created successfully'
+        }
+      }
+
       case 'PUT': {
         const projectId = Number(params.projectId)
         if (isNaN(projectId)) {
